@@ -60,6 +60,22 @@
         }
         .claim-dot.completed { background: #10b981; }
         .claim-dot.current { background: #6366f1; width: 14px; height: 14px; }
+        /* 政策卡片样式 */
+        .policy-item {
+            border-bottom: 1px solid #f3f4f6;
+            padding: 0.75rem 0;
+            transition: background-color 0.15s ease;
+        }
+        .policy-item:hover {
+            background-color: #f9fafb;
+        }
+        .policy-tag {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 500;
+        }
     </style>
 </head>
 <body class="bg-[#f9fafb] text-[#111827] font-sans antialiased">
@@ -88,6 +104,9 @@
                 </a>
                 <a href="#insurance" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>🛡️</span> 保险推荐
+                </a>
+                <a href="#policy" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>📜</span> 农业政策
                 </a>
             </nav>
             <div class="px-6 py-4 border-t border-gray-800 flex items-center gap-3">
@@ -216,6 +235,22 @@
                         </div>
                     </div>
                 </section>
+
+                <!-- 新增：最新农业政策 -->
+                <section id="policy" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-semibold tracking-tight text-sm md:text-base">📜 最新农业政策</h3>
+                        <button onclick="refreshPolicy()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-150">
+                            🔄 刷新政策
+                        </button>
+                    </div>
+                    <div id="policyList" class="space-y-0">
+                        <!-- 由 JS 动态渲染 -->
+                    </div>
+                    <div class="mt-4 text-xs text-gray-400">
+                        数据来源：农业农村部、广东省农业农村厅 | 演示数据，可接入真实 API
+                    </div>
+                </section>
             </main>
         </div>
     </div>
@@ -262,6 +297,64 @@
             }
         };
 
+        // 农业政策数据库（模拟数据，可扩展）
+        const POLICY_DB = [
+            {
+                id: 1,
+                title: '关于加快农业保险高质量发展的指导意见',
+                source: '农业农村部',
+                date: '2026-07-25',
+                tags: ['国家政策', '农业保险'],
+                summary: '提出扩大农业保险覆盖面，提高保障水平，优化运行机制，推动农业保险高质量发展。',
+                crops: ['guava', 'dragonfruit']
+            },
+            {
+                id: 2,
+                title: '广东省政策性农业保险实施方案（2026-2028年）',
+                source: '广东省农业农村厅',
+                date: '2026-07-10',
+                tags: ['省级政策', '种植业'],
+                summary: '明确对水稻、水果等作物保险的保费补贴比例，鼓励特色农产品保险创新。',
+                crops: ['guava', 'dragonfruit']
+            },
+            {
+                id: 3,
+                title: '汕头市濠江区特色农产品优势区建设规划',
+                source: '濠江区农业农村和水务局',
+                date: '2026-06-30',
+                tags: ['地方政策', '火龙果', '番石榴'],
+                summary: '重点支持火龙果、番石榴等特色产业发展，提供技术培训、品牌建设和保险试点。',
+                crops: ['guava', 'dragonfruit']
+            },
+            {
+                id: 4,
+                title: '关于支持设施农业发展的通知',
+                source: '财政部、农业农村部',
+                date: '2026-06-15',
+                tags: ['设施农业', '补贴'],
+                summary: '对设施农业（含大棚、水肥一体化）给予财政补贴，提升防灾抗灾能力。',
+                crops: ['guava', 'dragonfruit']
+            },
+            {
+                id: 5,
+                title: '红心火龙果种植技术规程（2026年修订版）',
+                source: '广东省农业科学院',
+                date: '2026-05-20',
+                tags: ['技术标准', '火龙果'],
+                summary: '发布最新的火龙果种植管理规范，包括水肥管理、病虫害防治和采收标准。',
+                crops: ['dragonfruit']
+            },
+            {
+                id: 6,
+                title: '番石榴主要病虫害绿色防控技术指南',
+                source: '全国农业技术推广服务中心',
+                date: '2026-05-12',
+                tags: ['植保', '番石榴'],
+                summary: '推广番石榴病虫害绿色防控技术，减少化学农药使用，提高果品质量。',
+                crops: ['guava']
+            }
+        ];
+
         let currentCrop = 'guava';
         let weatherData = {
             current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 },
@@ -278,6 +371,7 @@
             updateCharts();
             updateAdvice();
             updateInsurance();
+            renderPolicy();
         }
 
         // 获取当前天气
@@ -490,21 +584,65 @@
             document.getElementById('insuranceBadge').textContent = riskLevel === '高' ? '需关注' : '已激活';
         }
 
+        // 渲染农业政策
+        function renderPolicy() {
+            const container = document.getElementById('policyList');
+            // 根据当前作物筛选政策（如果政策标签包含当前作物或为通用政策）
+            const filtered = POLICY_DB.filter(p => 
+                p.crops.includes(currentCrop) || p.tags.some(tag => ['国家政策', '省级政策', '设施农业'].includes(tag))
+            );
+            if (filtered.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500 py-4">暂无相关农业政策。</p>';
+                return;
+            }
+            container.innerHTML = filtered.map(p => `
+                <div class="policy-item">
+                    <div class="flex items-start justify-between gap-4">
+                        <div>
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <span class="text-sm font-semibold text-gray-800">${p.title}</span>
+                                ${p.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700">${tag}</span>`).join('')}
+                            </div>
+                            <p class="text-xs text-gray-600 mb-1">${p.summary}</p>
+                            <div class="text-xs text-gray-400">${p.source} · ${p.date}</div>
+                        </div>
+                        <a href="#" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap" onclick="event.preventDefault(); alert('详情页可接入真实链接');">查看详情 →</a>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 刷新政策（模拟重新获取，可随机调整顺序或内容）
+        function refreshPolicy() {
+            // 简单模拟：打乱政策顺序，保持过滤不变
+            const shuffled = [...POLICY_DB].sort(() => Math.random() - 0.5);
+            // 临时替换数组，重新渲染
+            const original = POLICY_DB;
+            POLICY_DB.length = 0;
+            POLICY_DB.push(...shuffled);
+            renderPolicy();
+            // 恢复原顺序（避免永久改变）
+            POLICY_DB.length = 0;
+            POLICY_DB.push(...original);
+            // 显示提示
+            alert('政策已更新（演示数据）');
+        }
+
         // 作物切换
         function onCropChange() {
             currentCrop = document.getElementById('cropSelect').value;
             updateAdvice();
             updateInsurance();
+            renderPolicy();
         }
 
-        // 打开理赔模态框（隐藏入口：只通过铃铛触发）
+        // 打开理赔模态框
         function openClaimModal() {
             claimModalOpen = true;
             document.getElementById('claimModal').classList.add('active');
             document.body.style.overflow = 'hidden';
             populateClaimModal();
-            // 模拟铃铛红点消失
-            const badge = document.querySelector('.notification-bell .badge, .relative .bg-red-500');
+            const badge = document.querySelector('.relative .bg-red-500');
             if (badge) badge.style.display = 'none';
         }
 
@@ -513,7 +651,6 @@
             claimModalOpen = false;
             document.getElementById('claimModal').classList.remove('active');
             document.body.style.overflow = 'auto';
-            // 恢复红点（表示仍有未处理理赔）
             const badge = document.querySelector('.relative .bg-red-500');
             if (badge) badge.style.display = 'flex';
         }
