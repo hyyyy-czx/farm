@@ -6,50 +6,54 @@
     <title>农保智策 · 汕头濠江</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* 移动端降级：禁止固定背景，使用滚动 */
-        @media (max-width: 768px) {
-            .bg-fixed {
-                background-attachment: scroll !important;
-            }
+        /* 自定义圆形元素（避免使用 rounded-full 类） */
+        .circle {
+            border-radius: 50%;
         }
-        /* 缓慢扫光层 */
-        .glass-glare {
-            position: relative;
-            overflow: hidden;
-        }
-        .glass-glare::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: linear-gradient(120deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%);
-            transform: translateX(-100%);
-            transition: transform 0.7s cubic-bezier(0.25, 0.8, 0.25, 1);
-            pointer-events: none;
-        }
-        .glass-glare:hover::after {
-            transform: translateX(100%);
-        }
-        /* 圆环仪表 */
         .ring {
             width: 60px;
             height: 60px;
             border-radius: 50%;
-            background: conic-gradient(var(--ring-color) 0deg, var(--ring-color) var(--deg), rgba(255,255,255,0.15) var(--deg));
+            background: conic-gradient(var(--ring-color) 0deg, var(--ring-color) var(--deg), #e5e7eb var(--deg));
             display: flex;
             align-items: center;
             justify-content: center;
-            font-weight: 700;
-            font-size: 0.9rem;
-            color: white;
+            font-weight: 600;
+            font-size: 0.85rem;
+            color: #111827;
+            border: 4px solid #fff;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .ring-inner {
             width: 46px;
             height: 46px;
             border-radius: 50%;
-            background: rgba(30,58,95,0.9);
+            background: #fff;
             display: flex;
             align-items: center;
             justify-content: center;
+        }
+        /* 简单柱状图 */
+        .bar-chart {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+            height: 100%;
+            min-height: 120px;
+            padding: 8px 0;
+        }
+        .bar {
+            flex: 1;
+            background: #6366f1;
+            border-radius: 4px 4px 0 0;
+            transition: height 0.5s ease;
+            min-height: 4px;
+        }
+        /* 响应式侧边栏 */
+        @media (max-width: 768px) {
+            .sidebar {
+                display: none !important;
+            }
         }
         @media (prefers-reduced-motion: reduce) {
             * {
@@ -59,220 +63,232 @@
         }
     </style>
 </head>
-<body class="font-sans leading-relaxed text-white antialiased bg-[#1e3a5f]">
+<body class="bg-[#f9fafb] text-[#111827] font-sans antialiased">
 
-    <!-- 固定导航 -->
-    <nav class="fixed top-0 inset-x-0 z-50 bg-[#1e3a5f]/80 backdrop-blur-lg border-b border-white/20 px-6 md:px-12">
-        <div class="max-w-6xl mx-auto flex items-center justify-between py-4">
-            <a href="/" class="font-bold tracking-tight text-2xl md:text-3xl text-white">
-                🌾 农保智策
-            </a>
-            <div class="flex gap-6 md:gap-8 text-sm text-white/80">
-                <a href="#dashboard" class="hover:text-white transition-all duration-300">数据</a>
-                <a href="#advice" class="hover:text-white transition-all duration-300">建议</a>
-                <a href="#claim" class="hover:text-white transition-all duration-300">理赔</a>
-                <a href="#sensor" class="hover:text-white transition-all duration-300">传感器</a>
+    <!-- 整体布局：侧边栏 + 内容区 -->
+    <div class="flex min-h-screen">
+
+        <!-- 左侧深色侧边栏 -->
+        <aside class="sidebar w-64 bg-gray-900 text-white flex flex-col fixed inset-y-0 left-0 z-50">
+            <!-- Logo -->
+            <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
+                <span class="text-2xl">🌾</span>
+                <span class="font-semibold tracking-tight text-lg">农保智策</span>
             </div>
-        </div>
-    </nav>
-
-    <!-- Hero 区块 -->
-    <section id="hero" class="min-h-screen flex items-center justify-center bg-fixed bg-cover bg-center px-6 md:px-12"
-             style="background-image: linear-gradient(135deg, #1e3a5f 0%, #2d4a7a 50%, #1e3a5f 100%);">
-        <div class="max-w-4xl mx-auto text-center">
-            <h1 class="font-bold tracking-tight text-5xl md:text-7xl text-white mb-6">
-                农保智策
-            </h1>
-            <p class="text-lg md:text-xl text-white/80 max-w-xl mx-auto mb-10">
-                为汕头濠江小农户提供气象预警、土壤监测与保险理赔一体化服务
-            </p>
-            <div class="flex justify-center gap-4">
-                <a href="#dashboard" class="backdrop-blur-md rounded-full bg-white/20 text-white border border-white/30 px-8 py-3 font-bold transition-all duration-500 hover:bg-white/30">
-                    查看实时数据
+            <!-- 菜单 -->
+            <nav class="flex-1 py-4 space-y-1">
+                <a href="#dashboard" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium bg-white/10 text-white">
+                    <span>📊</span> 数据概览
                 </a>
-                <button onclick="triggerClaim()" class="backdrop-blur-md rounded-full bg-[#3b82f6] text-white border border-white/30 px-8 py-3 font-bold transition-all duration-500 hover:bg-[#2563eb]">
-                    模拟理赔
-                </button>
-            </div>
-            <!-- 预警摘要 -->
-            <div id="heroAlert" class="mt-12 backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-6 md:p-8 max-w-lg mx-auto">
-                <div class="flex items-center gap-4">
-                    <span id="heroAlertIcon" class="text-3xl">⚠️</span>
-                    <div>
-                        <div id="heroAlertTitle" class="font-bold text-xl">降雨提醒</div>
-                        <div id="heroAlertDesc" class="text-sm opacity-80">当前降雨 -- mm</div>
-                    </div>
+                <a href="#sensor" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>🌡️</span> 土壤传感器
+                </a>
+                <a href="#weather" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>⛅</span> 气象预报
+                </a>
+                <a href="#insurance" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>🛡️</span> 我的保单
+                </a>
+                <a href="#claim" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>📋</span> 理赔进度
+                </a>
+                <a href="#advice" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>💡</span> 种植建议
+                </a>
+            </nav>
+            <!-- 底部用户信息 -->
+            <div class="px-6 py-4 border-t border-gray-800 flex items-center gap-3">
+                <div class="w-8 h-8 circle bg-indigo-500 flex items-center justify-center text-sm font-bold">张</div>
+                <div>
+                    <div class="text-sm font-medium">张建国</div>
+                    <div class="text-xs text-gray-400">汕头濠江</div>
                 </div>
             </div>
-        </div>
-    </section>
+        </aside>
 
-    <!-- 仪表盘区块 -->
-    <section id="dashboard" class="min-h-screen flex items-center justify-center bg-fixed bg-cover bg-center px-6 md:px-12"
-             style="background-image: linear-gradient(160deg, #0f2a45 0%, #1e3a5f 60%, #2a4d7a 100%);">
-        <div class="max-w-6xl mx-auto w-full">
-            <h2 class="font-bold tracking-tight text-4xl md:text-5xl text-white mb-12 text-center">
-                实时农情仪表盘
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-                <!-- 降雨卡片 -->
-                <div class="glass-glare backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-6 md:p-8 shadow-xl transition-opacity duration-500 hover:opacity-100">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm uppercase tracking-wide opacity-70">🌧️ 实时降雨</span>
-                        <span class="text-2xl">🌧️</span>
+        <!-- 右侧内容区 -->
+        <div class="flex-1 ml-64">
+            <!-- 顶部工具栏 -->
+            <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-4 md:px-6 py-4">
+                <div class="flex items-center justify-between gap-4">
+                    <!-- 搜索框 -->
+                    <div class="relative flex-1 max-w-md">
+                        <input type="text" placeholder="搜索农情数据、保单号..."
+                               class="w-full bg-gray-50 border border-gray-200 rounded-lg text-sm px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-[#6366f1]/20 focus:border-[#6366f1] transition-all">
+                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
                     </div>
-                    <div class="text-3xl md:text-4xl font-bold">
-                        <span id="rainVal">--</span> <span class="text-lg opacity-70">mm</span>
-                    </div>
-                    <div class="mt-2 text-sm opacity-70">风速 <span id="windVal">--</span> m/s</div>
-                    <!-- 圆环 -->
-                    <div class="flex justify-center mt-4">
-                        <div class="ring" id="rainRing" style="--ring-color:#3b82f6; --deg:0deg;">
-                            <div class="ring-inner">💧</div>
-                        </div>
+                    <!-- 右侧操作 -->
+                    <div class="flex items-center gap-3">
+                        <button class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors duration-150">
+                            <span class="text-xl">🔔</span>
+                            <span class="absolute top-0 right-0 w-4 h-4 bg-red-500 text-white text-xs circle flex items-center justify-center font-medium">1</span>
+                        </button>
+                        <div class="w-8 h-8 circle bg-indigo-500 flex items-center justify-center text-white text-sm font-bold">张</div>
                     </div>
                 </div>
-                <!-- 土壤湿度卡片 -->
-                <div class="glass-glare backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-6 md:p-8 shadow-xl transition-opacity duration-500 hover:opacity-100">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm uppercase tracking-wide opacity-70">💧 土壤湿度</span>
-                        <span class="text-2xl">💧</span>
-                    </div>
-                    <div class="text-3xl md:text-4xl font-bold">
-                        <span id="soilMoist">--</span> <span class="text-lg opacity-70">%</span>
-                    </div>
-                    <div class="mt-2 text-sm opacity-70">地表体积含水量</div>
-                    <div class="flex justify-center mt-4">
-                        <div class="ring" id="moistRing" style="--ring-color:#f0a04b; --deg:0deg;">
-                            <div class="ring-inner">🌱</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 土壤温度卡片 -->
-                <div class="glass-glare backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-6 md:p-8 shadow-xl transition-opacity duration-500 hover:opacity-100">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm uppercase tracking-wide opacity-70">🌡️ 土壤温度</span>
-                        <span class="text-2xl">🌡️</span>
-                    </div>
-                    <div class="text-3xl md:text-4xl font-bold">
-                        <span id="soilTemp">--</span> <span class="text-lg opacity-70">°C</span>
-                    </div>
-                    <div class="mt-2 text-sm opacity-70">地表温度</div>
-                    <div class="flex justify-center mt-4">
-                        <div class="ring" id="tempRing" style="--ring-color:#e0554a; --deg:0deg;">
-                            <div class="ring-inner">🌡️</div>
-                        </div>
-                    </div>
-                </div>
-                <!-- 保单卡片 -->
-                <div class="glass-glare backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-6 md:p-8 shadow-xl transition-opacity duration-500 hover:opacity-100">
-                    <div class="flex items-center justify-between mb-4">
-                        <span class="text-sm uppercase tracking-wide opacity-70">🛡️ 保单状态</span>
-                        <span class="text-2xl">🛡️</span>
-                    </div>
-                    <div class="text-3xl md:text-4xl font-bold text-[#1e5c32]">有效</div>
-                    <div class="mt-2 text-sm opacity-70">水稻种植险 · ¥8,000/亩</div>
-                    <div class="mt-4 text-sm text-[#1e5c32]">✅ 自动理赔已激活</div>
-                </div>
-            </div>
-        </div>
-    </section>
+            </header>
 
-    <!-- 种植建议 + 理赔进度 双栏区块 -->
-    <section id="advice" class="min-h-screen flex items-center justify-center bg-fixed bg-cover bg-center px-6 md:px-12"
-             style="background-image: linear-gradient(200deg, #1e3a5f 0%, #162c47 80%, #1e3a5f 100%);">
-        <div class="max-w-6xl mx-auto w-full grid grid-cols-1 md:grid-cols-2 gap-8">
-            <!-- 智能种植建议 -->
-            <div class="backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-8 md:p-10 shadow-xl">
-                <h3 class="font-bold tracking-tight text-2xl md:text-3xl mb-6">💡 智能种植建议</h3>
-                <div id="adviceList" class="space-y-6 text-base md:text-lg">
-                    <div class="flex items-start gap-3">
-                        <span class="w-2 h-2 mt-2 rounded-full bg-[#1e5c32]"></span>
-                        <div>天气和土壤条件良好，按常规管理即可。</div>
+            <!-- 主体内容 -->
+            <main class="px-4 md:px-6 py-6 space-y-6">
+                <!-- KPI 卡片网格 -->
+                <section id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <!-- 实时降雨 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs text-gray-500">🌧️ 实时降雨</span>
+                            <span class="text-green-500 text-xs font-medium">+12%</span>
+                        </div>
+                        <div class="text-2xl md:text-3xl font-semibold tracking-tight">
+                            <span id="rainVal">--</span> <span class="text-sm text-gray-500">mm</span>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-400">风速 <span id="windVal">--</span> m/s</div>
                     </div>
-                </div>
-            </div>
+                    <!-- 土壤湿度 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs text-gray-500">💧 土壤湿度</span>
+                            <span class="text-yellow-500 text-xs font-medium">较昨日 -3%</span>
+                        </div>
+                        <div class="text-2xl md:text-3xl font-semibold tracking-tight">
+                            <span id="soilMoist">--</span> <span class="text-sm text-gray-500">%</span>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-400">地表体积含水量</div>
+                    </div>
+                    <!-- 土壤温度 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs text-gray-500">🌡️ 土壤温度</span>
+                            <span class="text-red-500 text-xs font-medium">+1.5°C</span>
+                        </div>
+                        <div class="text-2xl md:text-3xl font-semibold tracking-tight">
+                            <span id="soilTemp">--</span> <span class="text-sm text-gray-500">°C</span>
+                        </div>
+                        <div class="mt-2 text-xs text-gray-400">地表温度</div>
+                    </div>
+                    <!-- 保单状态 -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
+                        <div class="flex items-center justify-between mb-3">
+                            <span class="text-xs text-gray-500">🛡️ 保单状态</span>
+                            <span class="text-green-500 text-xs font-medium">有效</span>
+                        </div>
+                        <div class="text-2xl md:text-3xl font-semibold tracking-tight text-indigo-600">有效</div>
+                        <div class="mt-2 text-xs text-gray-400">水稻种植险 · ¥8,000/亩</div>
+                    </div>
+                </section>
 
-            <!-- 理赔进度 -->
-            <div id="claim" class="backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-8 md:p-10 shadow-xl">
-                <h3 class="font-bold tracking-tight text-2xl md:text-3xl mb-6">📋 理赔进度跟踪</h3>
-                <div class="space-y-4">
-                    <div class="flex items-center gap-4">
-                        <div class="w-8 h-8 rounded-full bg-[#1e5c32] text-white flex items-center justify-center font-bold text-sm">✓</div>
-                        <div>
-                            <div class="font-bold">数据监测</div>
-                            <div class="text-sm opacity-70">气象站实时采集</div>
+                <!-- 图表区域 -->
+                <section id="charts" class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                    <!-- 主图表：降雨量趋势（占2/3） -->
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold tracking-tight text-sm md:text-base">24小时降雨趋势</h3>
+                            <span class="text-xs text-gray-500">单位：mm</span>
+                        </div>
+                        <div class="aspect-video w-full">
+                            <div class="bar-chart" id="rainBarChart">
+                                <!-- 由JS动态填充柱状条 -->
+                                <div class="bar" style="height:10%"></div>
+                                <div class="bar" style="height:20%"></div>
+                                <div class="bar" style="height:15%"></div>
+                                <div class="bar" style="height:40%"></div>
+                                <div class="bar" style="height:60%"></div>
+                                <div class="bar" style="height:80%"></div>
+                                <div class="bar" style="height:55%"></div>
+                                <div class="bar" style="height:35%"></div>
+                                <div class="bar" style="height:25%"></div>
+                                <div class="bar" style="height:10%"></div>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <div id="step2dot" class="w-8 h-8 rounded-full bg-[#f0a04b] text-white flex items-center justify-center font-bold text-sm">2</div>
-                        <div>
-                            <div class="font-bold">阈值判断</div>
-                            <div class="text-sm opacity-70">降雨量分析中</div>
+                    <!-- 辅助图表：土壤湿度分布（占1/3） -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 flex flex-col">
+                        <div class="flex items-center justify-between mb-4">
+                            <h3 class="font-semibold tracking-tight text-sm md:text-base">土壤湿度</h3>
+                            <span class="text-xs text-gray-500">当前</span>
                         </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <div id="step3dot" class="w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center font-bold text-sm">3</div>
-                        <div>
-                            <div class="font-bold">自动定损</div>
-                            <div class="text-sm opacity-70">卫星遥感评估</div>
+                        <div class="flex-1 flex items-center justify-center">
+                            <div class="ring" id="moistRing" style="--ring-color:#6366f1; --deg:0deg;">
+                                <div class="ring-inner">
+                                    <span id="moistPercent">--%</span>
+                                </div>
+                            </div>
                         </div>
+                        <div class="text-center text-xs text-gray-500 mt-4">适宜范围 60% - 75%</div>
                     </div>
-                    <div class="flex items-center gap-4">
-                        <div id="step4dot" class="w-8 h-8 rounded-full bg-gray-300 text-white flex items-center justify-center font-bold text-sm">4</div>
-                        <div>
-                            <div class="font-bold">赔款到账</div>
-                            <div class="text-sm opacity-70">3个工作日内</div>
-                        </div>
-                    </div>
-                </div>
-                <button onclick="triggerClaim()" class="mt-8 backdrop-blur-md rounded-full bg-[#1e3a5f] text-white border border-white/30 px-6 py-3 font-bold transition-all duration-500 hover:bg-[#162c47]">
-                    模拟理赔触发
-                </button>
-            </div>
-        </div>
-    </section>
+                </section>
 
-    <!-- 土壤传感器区块 -->
-    <section id="sensor" class="min-h-screen flex items-center justify-center bg-fixed bg-cover bg-center px-6 md:px-12"
-             style="background-image: linear-gradient(140deg, #0f2a45 0%, #1e3a5f 40%, #2a4d7a 100%);">
-        <div class="max-w-6xl mx-auto w-full">
-            <h2 class="font-bold tracking-tight text-4xl md:text-5xl text-white mb-12 text-center">
-                土壤传感器 · 稻田1号
-            </h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div class="backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-8 text-center shadow-xl">
-                    <div class="w-24 h-24 mx-auto rounded-full bg-[#3b82c4]/20 flex items-center justify-center">
-                        <span class="text-4xl">💧</span>
+                <!-- 种植建议 + 理赔进度（大小不同面板） -->
+                <section id="advice-claim" class="grid grid-cols-1 lg:grid-cols-3 gap-4 md:gap-6">
+                    <!-- 种植建议（占2/3） -->
+                    <div id="advice" class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                        <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">💡 智能种植建议</h3>
+                        <div id="adviceList" class="space-y-4">
+                            <div class="flex items-start gap-3">
+                                <span class="w-2 h-2 mt-1 circle bg-green-500"></span>
+                                <div class="text-sm text-gray-700">天气和土壤条件良好，按常规管理即可。</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="text-3xl font-bold mt-4" id="sensorMoist">--%</div>
-                    <div class="text-sm opacity-70 mt-1">土壤湿度</div>
-                </div>
-                <div class="backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-8 text-center shadow-xl">
-                    <div class="w-24 h-24 mx-auto rounded-full bg-[#f0a04b]/20 flex items-center justify-center">
-                        <span class="text-4xl">🧪</span>
+                    <!-- 理赔进度（占1/3） -->
+                    <div id="claim" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                        <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">📋 理赔进度</h3>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3">
+                                <div class="w-6 h-6 circle bg-green-500 text-white flex items-center justify-center text-xs">✓</div>
+                                <div>
+                                    <div class="text-sm font-medium">数据监测</div>
+                                    <div class="text-xs text-gray-500">气象站实时采集</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div id="step2dot" class="w-6 h-6 circle bg-indigo-500 text-white flex items-center justify-center text-xs">2</div>
+                                <div>
+                                    <div class="text-sm font-medium">阈值判断</div>
+                                    <div class="text-xs text-gray-500">降雨量分析中</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div id="step3dot" class="w-6 h-6 circle bg-gray-200 text-gray-500 flex items-center justify-center text-xs">3</div>
+                                <div>
+                                    <div class="text-sm font-medium">自动定损</div>
+                                    <div class="text-xs text-gray-500">卫星遥感评估</div>
+                                </div>
+                            </div>
+                            <div class="flex items-center gap-3">
+                                <div id="step4dot" class="w-6 h-6 circle bg-gray-200 text-gray-500 flex items-center justify-center text-xs">4</div>
+                                <div>
+                                    <div class="text-sm font-medium">赔款到账</div>
+                                    <div class="text-xs text-gray-500">3个工作日内</div>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="triggerClaim()" class="mt-4 w-full bg-[#6366f1] text-white rounded-lg font-medium text-sm py-2 px-4 transition-colors duration-150 hover:bg-indigo-700 active:scale-[0.97] focus:outline-none focus:ring-2 focus:ring-[#6366f1]/50">
+                            模拟理赔触发
+                        </button>
                     </div>
-                    <div class="text-3xl font-bold mt-4">6.4</div>
-                    <div class="text-sm opacity-70 mt-1">pH 值</div>
-                </div>
-                <div class="backdrop-blur-sm rounded-2xl bg-white/90 text-[#1e3a5f] p-8 text-center shadow-xl">
-                    <div class="w-24 h-24 mx-auto rounded-full bg-[#e0554a]/20 flex items-center justify-center">
-                        <span class="text-4xl">🌡️</span>
-                    </div>
-                    <div class="text-3xl font-bold mt-4" id="sensorTemp">--°</div>
-                    <div class="text-sm opacity-70 mt-1">地表温度</div>
-                </div>
-            </div>
-        </div>
-    </section>
+                </section>
 
-    <!-- 页脚 -->
-    <footer class="bg-[#1e3a5f] text-white border-t border-white/20 py-8 px-6 md:px-12">
-        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-            <span class="font-bold tracking-tight text-2xl">🌾 农保智策</span>
-            <span class="text-sm text-white/60">为小农户提供保险与种植建议一体化服务</span>
+                <!-- 土壤传感器仪表 -->
+                <section id="sensor" class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 text-center">
+                        <div class="w-16 h-16 mx-auto circle bg-blue-50 flex items-center justify-center text-3xl">💧</div>
+                        <div class="text-2xl font-semibold mt-3" id="sensorMoist">--%</div>
+                        <div class="text-xs text-gray-500 mt-1">土壤湿度</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 text-center">
+                        <div class="w-16 h-16 mx-auto circle bg-amber-50 flex items-center justify-center text-3xl">🧪</div>
+                        <div class="text-2xl font-semibold mt-3">6.4</div>
+                        <div class="text-xs text-gray-500 mt-1">pH 值</div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 text-center">
+                        <div class="w-16 h-16 mx-auto circle bg-red-50 flex items-center justify-center text-3xl">🌡️</div>
+                        <div class="text-2xl font-semibold mt-3" id="sensorTemp">--°</div>
+                        <div class="text-xs text-gray-500 mt-1">地表温度</div>
+                    </div>
+                </section>
+            </main>
         </div>
-    </footer>
+    </div>
 
     <script>
         const LAT = 23.30, LON = 116.66;
@@ -299,57 +315,78 @@
         }
 
         function updateUI() {
-            // 基础数据
+            // 更新KPI数值
             document.getElementById('rainVal').textContent = currentRain.toFixed(1);
             document.getElementById('windVal').textContent = currentWind.toFixed(1);
             document.getElementById('soilMoist').textContent = currentSoilMoisture;
             document.getElementById('soilTemp').textContent = currentSoilTemp.toFixed(1);
+
+            // 更新圆环角度
+            const moistDeg = currentSoilMoisture * 3.6;
+            document.getElementById('moistRing').style.setProperty('--deg', `${moistDeg}deg`);
+            document.getElementById('moistPercent').textContent = currentSoilMoisture + '%';
+
+            // 更新传感器显示
             document.getElementById('sensorMoist').textContent = currentSoilMoisture + '%';
             document.getElementById('sensorTemp').textContent = currentSoilTemp.toFixed(1) + '°';
 
-            // 圆环角度
-            document.getElementById('rainRing').style.setProperty('--deg', `${Math.min(currentRain,100)*3.6}deg`);
-            document.getElementById('moistRing').style.setProperty('--deg', `${currentSoilMoisture*3.6}deg`);
-            document.getElementById('tempRing').style.setProperty('--deg', `${Math.min(currentSoilTemp,45)*8}deg`);
-
-            // Hero 预警摘要
-            const heroIcon = document.getElementById('heroAlertIcon');
-            const heroTitle = document.getElementById('heroAlertTitle');
-            const heroDesc = document.getElementById('heroAlertDesc');
-            if (claimActive) {
-                heroIcon.textContent = '🛡️'; heroTitle.textContent = '理赔已触发';
-                heroDesc.textContent = '降雨量已超阈值，系统正在定损';
-            } else if (currentRain > THRESHOLD_RAIN) {
-                heroIcon.textContent = '⚠️'; heroTitle.textContent = '暴雨预警';
-                heroDesc.textContent = `降雨 ${currentRain.toFixed(1)}mm 超过阈值，可触发理赔`;
-            } else if (currentRain > 30) {
-                heroIcon.textContent = '🌧️'; heroTitle.textContent = '降雨提醒';
-                heroDesc.textContent = `当前降雨 ${currentRain.toFixed(1)}mm，请注意田间排水`;
-            } else {
-                heroIcon.textContent = '☀️'; heroTitle.textContent = '天气良好';
-                heroDesc.textContent = `当前降雨 ${currentRain.toFixed(1)}mm，适宜农事活动`;
+            // 更新柱状图（模拟24小时降雨数据，根据当前值调整高度）
+            const bars = document.querySelectorAll('#rainBarChart .bar');
+            if (bars.length > 0) {
+                // 生成模拟数据
+                const hourlyData = [];
+                for (let j = 0; j < bars.length; j++) {
+                    // 使用当前降雨量作为基准，添加一些随机变化
+                    let val = currentRain * (0.5 + Math.random() * 0.8);
+                    hourlyData.push(val);
+                }
+                // 确保包含当前小时的值
+                const currentHourIndex = new Date().getHours() % bars.length;
+                hourlyData[currentHourIndex] = currentRain;
+                bars.forEach((bar, idx) => {
+                    const height = Math.min(100, (hourlyData[idx] / 100) * 100); // 最大100mm对应100%
+                    bar.style.height = height + '%';
+                    // 颜色编码：超过阈值红色，否则蓝色
+                    if (hourlyData[idx] > THRESHOLD_RAIN) {
+                        bar.style.background = '#ef4444';
+                    } else {
+                        bar.style.background = '#6366f1';
+                    }
+                });
             }
 
-            // 种植建议
+            // 更新种植建议
             let advice = '';
-            if (currentRain > THRESHOLD_RAIN) advice += '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-2 rounded-full bg-[#e0554a]"></span><div><strong>暂停施肥施水</strong><br>暴雨可能引发内涝。</div></div>';
-            if (currentSoilMoisture > 75) advice += '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-2 rounded-full bg-[#f0a04b]"></span><div><strong>土壤过湿</strong><br>开沟排水，防渍害。</div></div>';
-            if (currentWind > 10) advice += '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-2 rounded-full bg-[#f0a04b]"></span><div><strong>风力较大</strong><br>加固大棚。</div></div>';
-            if (!advice) advice = '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-2 rounded-full bg-[#1e5c32]"></span><div>天气和土壤条件良好，按常规管理即可。</div></div>';
+            if (claimActive) {
+                advice += '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-1 circle bg-yellow-500"></span><div class="text-sm text-gray-700"><strong>理赔已触发</strong><br>系统正在定损，请等待赔付。</div></div>';
+            } else if (currentRain > THRESHOLD_RAIN) {
+                advice += '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-1 circle bg-red-500"></span><div class="text-sm text-gray-700"><strong>暂停施肥施水</strong><br>暴雨可能引发内涝，请立即停止田间作业。</div></div>';
+            }
+            if (currentSoilMoisture > 75) {
+                advice += '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-1 circle bg-yellow-500"></span><div class="text-sm text-gray-700"><strong>土壤过湿</strong><br>开沟排水，防渍害。</div></div>';
+            } else if (currentSoilMoisture < 40) {
+                advice += '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-1 circle bg-red-500"></span><div class="text-sm text-gray-700"><strong>土壤偏干</strong><br>建议适量灌溉。</div></div>';
+            }
+            if (currentWind > 10) {
+                advice += '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-1 circle bg-yellow-500"></span><div class="text-sm text-gray-700"><strong>风力较大</strong><br>注意加固大棚设施。</div></div>';
+            }
+            if (!advice) {
+                advice = '<div class="flex items-start gap-3"><span class="w-2 h-2 mt-1 circle bg-green-500"></span><div class="text-sm text-gray-700">天气和土壤条件良好，按常规管理即可。</div></div>';
+            }
             document.getElementById('adviceList').innerHTML = advice;
         }
 
         function triggerClaim() {
             if (claimActive) return;
             claimActive = true;
-            // 更新理赔步骤
-            document.getElementById('step2dot').className = 'w-8 h-8 rounded-full bg-[#1e5c32] text-white flex items-center justify-center font-bold text-sm';
+            document.getElementById('step2dot').className = 'w-6 h-6 circle bg-green-500 text-white flex items-center justify-center text-xs';
             document.getElementById('step2dot').textContent = '✓';
-            document.getElementById('step3dot').className = 'w-8 h-8 rounded-full bg-[#f0a04b] text-white flex items-center justify-center font-bold text-sm';
+            document.getElementById('step3dot').className = 'w-6 h-6 circle bg-indigo-500 text-white flex items-center justify-center text-xs';
             document.getElementById('step3dot').textContent = '⚡';
             updateUI();
         }
 
+        // 初始化
         fetchWeather();
         setInterval(fetchWeather, 30 * 60 * 1000);
     </script>
