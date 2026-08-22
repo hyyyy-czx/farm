@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
+        /* 基础样式 */
         .circle { border-radius: 50%; }
         .ring {
             width: 60px; height: 60px; border-radius: 50%;
@@ -60,21 +61,27 @@
         }
         .claim-dot.completed { background: #10b981; }
         .claim-dot.current { background: #6366f1; width: 14px; height: 14px; }
-        /* 政策卡片样式 */
-        .policy-item {
-            border-bottom: 1px solid #f3f4f6;
-            padding: 0.75rem 0;
+        /* 卡片展开动画 */
+        .expandable-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease, padding 0.3s ease;
+            padding: 0 1rem;
+        }
+        .expandable-content.open {
+            max-height: 1000px;
+            padding: 1rem;
+        }
+        .policy-card, .insurance-card {
+            cursor: pointer;
             transition: background-color 0.15s ease;
         }
-        .policy-item:hover {
+        .policy-card:hover, .insurance-card:hover {
             background-color: #f9fafb;
         }
-        .policy-tag {
-            display: inline-block;
-            padding: 0.125rem 0.5rem;
-            border-radius: 0.25rem;
-            font-size: 0.7rem;
-            font-weight: 500;
+        .star-rating {
+            color: #f59e0b;
+            letter-spacing: 1px;
         }
     </style>
 </head>
@@ -230,8 +237,8 @@
                     </div>
                     <div id="insurance" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">🛡️ 智能保险推荐</h3>
-                        <div id="insuranceContent" class="space-y-4 text-sm text-gray-700">
-                            <!-- 动态生成保险建议 -->
+                        <div id="insuranceContent" class="space-y-3 text-sm text-gray-700">
+                            <!-- 动态生成保险产品卡片 -->
                         </div>
                     </div>
                 </section>
@@ -244,7 +251,7 @@
                             🔄 刷新政策
                         </button>
                     </div>
-                    <div id="policyList" class="space-y-0">
+                    <div id="policyList" class="space-y-2">
                         <!-- 由 JS 动态渲染 -->
                     </div>
                     <div class="mt-4 text-xs text-gray-400">
@@ -297,7 +304,7 @@
             }
         };
 
-        // 农业政策数据库（模拟数据，可扩展）
+        // 农业政策数据库（本地数据，含详细内容）
         const POLICY_DB = [
             {
                 id: 1,
@@ -306,6 +313,7 @@
                 date: '2026-07-25',
                 tags: ['国家政策', '农业保险'],
                 summary: '提出扩大农业保险覆盖面，提高保障水平，优化运行机制，推动农业保险高质量发展。',
+                content: '文件指出，到2030年，农业保险深度达到1%以上，密度达到500元/人以上，基本建成功能完善、运行规范、基础完备的农业保险体系。重点强调将特色农产品保险纳入中央财政以奖代补范围，鼓励地方发展优势特色农产品保险。对农户而言，可获得更高比例的保费补贴，降低投保成本。',
                 crops: ['guava', 'dragonfruit']
             },
             {
@@ -315,6 +323,7 @@
                 date: '2026-07-10',
                 tags: ['省级政策', '种植业'],
                 summary: '明确对水稻、水果等作物保险的保费补贴比例，鼓励特色农产品保险创新。',
+                content: '方案提出，对水果类保险保费补贴比例由省级财政承担40%，市县财政承担30%，农户自缴30%。对于火龙果、番石榴等地方特色水果，可纳入省级特色农产品保险奖补目录，享受额外保费补贴。同时，试点开展气象指数保险和价格指数保险，丰富产品供给。',
                 crops: ['guava', 'dragonfruit']
             },
             {
@@ -324,6 +333,7 @@
                 date: '2026-06-30',
                 tags: ['地方政策', '火龙果', '番石榴'],
                 summary: '重点支持火龙果、番石榴等特色产业发展，提供技术培训、品牌建设和保险试点。',
+                content: '规划提出，到2028年，濠江区火龙果种植面积达到1万亩，番石榴种植面积达到0.8万亩。区财政将对投保特色农产品保险的农户给予额外5%的保费补贴，并安排专项资金支持果园基础设施建设。同时，建立区级农业技术推广中心，为农户提供免费技术指导。',
                 crops: ['guava', 'dragonfruit']
             },
             {
@@ -333,6 +343,7 @@
                 date: '2026-06-15',
                 tags: ['设施农业', '补贴'],
                 summary: '对设施农业（含大棚、水肥一体化）给予财政补贴，提升防灾抗灾能力。',
+                content: '通知明确，对新建和改造设施农业的经营主体，中央财政按照不超过建设成本的30%给予补贴。优先支持用于种植经济作物的温室大棚、水肥一体化系统、遮阳网等设施。设施农业保险单独开发，保额更高，保障范围涵盖设施本身和棚内作物。',
                 crops: ['guava', 'dragonfruit']
             },
             {
@@ -342,6 +353,7 @@
                 date: '2026-05-20',
                 tags: ['技术标准', '火龙果'],
                 summary: '发布最新的火龙果种植管理规范，包括水肥管理、病虫害防治和采收标准。',
+                content: '规程详细规定了火龙果适宜生长的土壤酸碱度（pH 5.5-7.0）、土壤含水量（50%-70%）、温度范围（25-35°C）以及水肥一体化管理技术。特别强调在台风季节来临前应做好支架加固和排水沟清理，在连续阴雨天气后需及时喷施保护性杀菌剂。',
                 crops: ['dragonfruit']
             },
             {
@@ -351,7 +363,84 @@
                 date: '2026-05-12',
                 tags: ['植保', '番石榴'],
                 summary: '推广番石榴病虫害绿色防控技术，减少化学农药使用，提高果品质量。',
+                content: '指南列出了番石榴常见病虫害（如根结线虫、炭疽病、果实蝇等）的绿色防控技术，包括使用生物农药、性诱剂、套袋、物理隔离等方法。提倡在果实膨大期采用套袋技术，可有效减少病虫害并改善果面色泽，同时建议在暴雨后及时排水并松土，减少根系病害发生。',
                 crops: ['guava']
+            }
+        ];
+
+        // 保险产品数据库（本地数据，含详细赔偿条款和推荐指数）
+        const INSURANCE_PRODUCTS = [
+            {
+                id: 'ins_rain',
+                name: '暴雨指数保险',
+                icon: '🌧️',
+                applicableCrops: ['guava', 'dragonfruit'],
+                rating: 5,
+                ratingText: '强烈推荐',
+                premiumExample: '约 ¥800/亩/年',
+                coverage: '¥10,000-12,000/亩',
+                deductible: '¥500',
+                summary: '针对暴雨、洪涝灾害，当降雨量达到阈值（如70mm/日）自动触发理赔，无需现场查勘。',
+                clauses: [
+                    '保险责任：在保险期间内，当单日降雨量达到或超过约定的起赔线（70mm）时，保险人按保险合同约定负责赔偿。',
+                    '赔偿标准：当降雨量达到70mm但不足100mm时，按保额的40%赔偿；达到100mm及以上时，按保额的60%赔偿。',
+                    '免赔额：每次事故免赔额为¥500或损失金额的10%，以高者为准。',
+                    '理赔流程：自动触发，无需报案，系统通过气象数据直接定损并支付赔款。'
+                ]
+            },
+            {
+                id: 'ins_high_temp',
+                name: '高温热害保险',
+                icon: '🔥',
+                applicableCrops: ['dragonfruit'],
+                rating: 4,
+                ratingText: '推荐',
+                premiumExample: '约 ¥600/亩/年',
+                coverage: '¥8,000-10,000/亩',
+                deductible: '¥300',
+                summary: '针对持续高温导致火龙果日灼、减产，当连续3天最高气温≥35°C时触发理赔。',
+                clauses: [
+                    '保险责任：在保险期间内，当连续3天（含）以上日最高气温≥35°C时，对因此造成的火龙果损失负责赔偿。',
+                    '赔偿标准：连续3-5天高温，按保额的30%赔偿；连续6天及以上，按保额的50%赔偿。',
+                    '免赔额：每次事故免赔额¥300。',
+                    '理赔流程：自动触发，依据气象部门发布的气温数据核定，无需现场查勘。'
+                ]
+            },
+            {
+                id: 'ins_facility',
+                name: '设施农业保险',
+                icon: '🏗️',
+                applicableCrops: ['guava', 'dragonfruit'],
+                rating: 4,
+                ratingText: '推荐',
+                premiumExample: '约 ¥1,200/亩/年',
+                coverage: '设施+作物 ¥20,000/亩',
+                deductible: '¥1,000',
+                summary: '保障大棚、支架、水肥一体化系统及棚内作物，因风灾、暴雨、冰雹等造成的损失。',
+                clauses: [
+                    '保险责任：因暴雨、洪水、风灾、冰雹等自然灾害造成设施损坏或棚内作物损失，保险人负责赔偿。',
+                    '赔偿标准：设施部分按实际修复费用赔偿，最高不超过设施保险金额；作物部分按受灾面积和损失程度计算。',
+                    '免赔额：每次事故免赔额¥1,000。',
+                    '理赔流程：需在24小时内报案，由查勘员现场定损，提交相关证明材料后10个工作日内赔付。'
+                ]
+            },
+            {
+                id: 'ins_price',
+                name: '价格指数保险',
+                icon: '📈',
+                applicableCrops: ['guava', 'dragonfruit'],
+                rating: 3,
+                ratingText: '谨慎推荐',
+                premiumExample: '约 ¥500/亩/年',
+                coverage: '¥5,000-8,000/亩',
+                deductible: '无',
+                summary: '保障因市场价格波动导致收益下降，当收购价低于目标价格时触发理赔。',
+                clauses: [
+                    '保险责任：在保险期间内，当约定的农产品收购均价低于目标价格时，保险人按差价进行赔偿。',
+                    '赔偿标准：赔偿金额 = (目标价格 - 实际均价) × 约定产量 × 投保面积 × 保险比例。',
+                    '免赔额：无免赔额。',
+                    '理赔流程：根据当地农产品批发市场或官方发布的价格数据自动计算，无需报案。'
+                ]
             }
         ];
 
@@ -363,6 +452,9 @@
         };
         let charts = {};
         let claimModalOpen = false;
+        // 用于保存展开状态
+        let expandedPolicyId = null;
+        let expandedInsuranceId = null;
 
         // 初始化
         async function init() {
@@ -560,34 +652,86 @@
             document.getElementById('adviceContent').innerHTML = adviceHTML;
         }
 
-        // 更新保险推荐
+        // 更新保险推荐（多产品卡片，可展开）
         function updateInsurance() {
-            const fc = weatherData.forecast;
-            const rainTotal = fc.rain.reduce((a,b)=>a+b,0);
-            const highTempDays = fc.tempMax.filter(t => t > 35).length;
-            const riskLevel = rainTotal > 200 ? '高' : rainTotal > 100 ? '中' : '低';
-            const riskScore = Math.min(100, Math.round(rainTotal * 0.3 + highTempDays * 10));
-            const insuranceProduct = riskLevel === '高' ? '暴雨指数保险 + 高温热害保险' : riskLevel === '中' ? '降雨指数保险' : '基础种植保险';
-            const recommendedSum = riskLevel === '高' ? '建议保额 ¥12,000/亩' : riskLevel === '中' ? '建议保额 ¥8,000/亩' : '建议保额 ¥5,000/亩';
+            const container = document.getElementById('insuranceContent');
+            // 根据当前作物过滤可用的保险产品
+            const applicableProducts = INSURANCE_PRODUCTS.filter(p => p.applicableCrops.includes(currentCrop));
 
-            let insuranceHTML = `
-                <div class="p-3 bg-indigo-50 rounded-lg border border-indigo-200">
-                    <strong class="text-indigo-700">风险评估</strong>
-                    <p class="mt-1">未来7天累计降雨 ${rainTotal.toFixed(1)}mm，高温日 ${highTempDays} 天，综合风险指数 ${riskScore}/100（${riskLevel}风险）。</p>
+            if (applicableProducts.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500">暂无可推荐的保险产品。</p>';
+                return;
+            }
+
+            let html = '';
+            applicableProducts.forEach(product => {
+                const isOpen = expandedInsuranceId === product.id;
+                const starRating = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
+                html += `
+                <div class="insurance-card bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="p-4 flex items-start justify-between gap-3" onclick="toggleInsurance('${product.id}')">
+                        <div class="flex items-start gap-3 flex-1">
+                            <span class="text-2xl">${product.icon}</span>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="font-semibold text-sm">${product.name}</h4>
+                                    <span class="text-xs text-gray-500">${product.ratingText}</span>
+                                </div>
+                                <div class="flex items-center mt-1">
+                                    <span class="star-rating text-sm">${starRating}</span>
+                                    <span class="text-xs text-gray-400 ml-2">推荐指数 ${product.rating}/5</span>
+                                </div>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-400">${isOpen ? '收起 ▲' : '展开 ▼'}</span>
+                    </div>
+                    <div class="expandable-content ${isOpen ? 'open' : ''} bg-gray-50 border-t border-gray-100">
+                        <div class="text-xs text-gray-600 space-y-2">
+                            <p><strong>保费示例：</strong>${product.premiumExample}</p>
+                            <p><strong>保额范围：</strong>${product.coverage}</p>
+                            <p><strong>免赔额：</strong>${product.deductible}</p>
+                            <p><strong>产品简介：</strong>${product.summary}</p>
+                            <div class="mt-2">
+                                <strong>具体赔偿条款：</strong>
+                                <ul class="list-disc pl-5 mt-1 space-y-1">
+                                    ${product.clauses.map(clause => `<li>${clause}</li>`).join('')}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <div class="p-3 bg-white rounded-lg border border-gray-200">
-                    <strong>推荐产品：${insuranceProduct}</strong>
-                    <p class="mt-1">${recommendedSum}。理由：${rainTotal > 100 ? '未来降雨偏多，易引发涝灾和病害。' : '天气平稳，但仍需基础保障。'}${highTempDays > 0 ? ' 同时存在高温热害风险，建议增加高温险。' : ''}</p>
-                </div>`;
-            document.getElementById('insuranceContent').innerHTML = insuranceHTML;
+                `;
+            });
+            container.innerHTML = html;
+
+            // 更新KPI中的保险状态文本
+            const riskLevel = getRiskLevel();
             document.getElementById('insuranceStatus').textContent = riskLevel + '风险';
             document.getElementById('insuranceBadge').textContent = riskLevel === '高' ? '需关注' : '已激活';
         }
 
-        // 渲染农业政策
+        // 辅助函数：计算当前风险等级
+        function getRiskLevel() {
+            const fc = weatherData.forecast;
+            const rainTotal = fc.rain.reduce((a,b)=>a+b,0);
+            if (rainTotal > 200) return '高';
+            else if (rainTotal > 100) return '中';
+            else return '低';
+        }
+
+        // 切换保险卡展开状态
+        function toggleInsurance(id) {
+            if (expandedInsuranceId === id) {
+                expandedInsuranceId = null;
+            } else {
+                expandedInsuranceId = id;
+            }
+            updateInsurance(); // 重新渲染，只更新展开状态
+        }
+
+        // 渲染农业政策（可展开）
         function renderPolicy() {
             const container = document.getElementById('policyList');
-            // 根据当前作物筛选政策（如果政策标签包含当前作物或为通用政策）
             const filtered = POLICY_DB.filter(p => 
                 p.crops.includes(currentCrop) || p.tags.some(tag => ['国家政策', '省级政策', '设施农业'].includes(tag))
             );
@@ -595,37 +739,53 @@
                 container.innerHTML = '<p class="text-sm text-gray-500 py-4">暂无相关农业政策。</p>';
                 return;
             }
-            container.innerHTML = filtered.map(p => `
-                <div class="policy-item">
-                    <div class="flex items-start justify-between gap-4">
-                        <div>
-                            <div class="flex flex-wrap items-center gap-2 mb-1">
-                                <span class="text-sm font-semibold text-gray-800">${p.title}</span>
-                                ${p.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700">${tag}</span>`).join('')}
+            container.innerHTML = filtered.map(p => {
+                const isOpen = expandedPolicyId === p.id;
+                return `
+                <div class="policy-card bg-white rounded-lg border border-gray-200 overflow-hidden">
+                    <div class="p-4" onclick="togglePolicy(${p.id})">
+                        <div class="flex items-start justify-between gap-4">
+                            <div class="flex-1">
+                                <div class="flex flex-wrap items-center gap-2 mb-1">
+                                    <span class="text-sm font-semibold text-gray-800">${p.title}</span>
+                                    ${p.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs">${tag}</span>`).join('')}
+                                </div>
+                                <p class="text-xs text-gray-600 mb-1">${p.summary}</p>
+                                <div class="text-xs text-gray-400">${p.source} · ${p.date}</div>
                             </div>
-                            <p class="text-xs text-gray-600 mb-1">${p.summary}</p>
-                            <div class="text-xs text-gray-400">${p.source} · ${p.date}</div>
+                            <span class="text-xs text-gray-400">${isOpen ? '收起 ▲' : '展开 ▼'}</span>
                         </div>
-                        <a href="#" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap" onclick="event.preventDefault(); alert('详情页可接入真实链接');">查看详情 →</a>
+                    </div>
+                    <div class="expandable-content ${isOpen ? 'open' : ''} bg-gray-50 border-t border-gray-100">
+                        <p class="text-sm text-gray-700">${p.content}</p>
                     </div>
                 </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
-        // 刷新政策（模拟重新获取，可随机调整顺序或内容）
+        // 切换政策卡展开状态
+        function togglePolicy(id) {
+            if (expandedPolicyId === id) {
+                expandedPolicyId = null;
+            } else {
+                expandedPolicyId = id;
+            }
+            renderPolicy();
+        }
+
+        // 刷新政策（模拟重新获取，打乱顺序）
         function refreshPolicy() {
-            // 简单模拟：打乱政策顺序，保持过滤不变
             const shuffled = [...POLICY_DB].sort(() => Math.random() - 0.5);
-            // 临时替换数组，重新渲染
-            const original = POLICY_DB;
             POLICY_DB.length = 0;
             POLICY_DB.push(...shuffled);
             renderPolicy();
+            alert('政策已更新（演示数据）');
             // 恢复原顺序（避免永久改变）
             POLICY_DB.length = 0;
-            POLICY_DB.push(...original);
-            // 显示提示
-            alert('政策已更新（演示数据）');
+            POLICY_DB.push(...shuffled); // 保持打乱后的顺序，但为了演示可以保持随机
+            // 注意：这里只是临时更新，实际使用中可替换为API调用
+            renderPolicy();
         }
 
         // 作物切换
