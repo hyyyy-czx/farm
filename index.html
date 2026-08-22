@@ -16,7 +16,7 @@
             border: 4px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .ring-inner { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; }
-        @media (max-width: 768px) { .sidebar { display: none !important; } .main-content { margin-left: 0 !important; } }
+        @media (max-width: 768px) { .sidebar { display: none !important; } .main-content { margin-left: 0 !important; } .floating-summary { left: 50% !important; } }
         @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
         .crop-select {
             background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem;
@@ -46,12 +46,12 @@
         .policy-card, .insurance-card, .purchased-card { cursor: pointer; transition: background-color 0.15s ease; }
         .policy-card:hover, .insurance-card:hover, .purchased-card:hover { background-color: #f9fafb; }
         .status-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 500; }
-        /* 悬浮摘要胶囊 */
+        /* 悬浮摘要胶囊 — 右移避免遮挡左侧文字 */
         .floating-summary {
             position: fixed;
             top: 16px;
-            left: 50%;
-            transform: translateX(-50%) translateY(-80px);
+            left: calc(50% + 80px);
+            transform: translateX(-50%) translateY(-90px);
             z-index: 60;
             background: rgba(255,255,255,0.92);
             backdrop-filter: blur(12px);
@@ -62,7 +62,7 @@
             padding: 0.35rem 1rem;
             display: flex;
             align-items: center;
-            gap: 0.75rem;
+            gap: 0.65rem;
             transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
             overflow-x: auto;
@@ -165,11 +165,13 @@
                 </div>
             </header>
 
-            <!-- 悬浮摘要胶囊（KPI不可见时出现） -->
+            <!-- 悬浮摘要胶囊（KPI不可见时出现，已右移 + 含天气） -->
             <div class="floating-summary" id="floatingSummary">
                 <div class="floating-summary-item"><span class="fs-icon">📅</span><span class="fs-value" id="fsDate">--</span></div>
                 <div class="fs-divider"></div>
-                <div class="floating-summary-item"><span class="fs-icon" id="fsWeatherIcon">⛅</span><span class="fs-value" id="fsRain">--</span><span class="fs-label">降雨</span></div>
+                <div class="floating-summary-item"><span class="fs-icon" id="fsWeatherIcon">⛅</span><span class="fs-value" id="fsWeatherDesc">--</span></div>
+                <div class="fs-divider"></div>
+                <div class="floating-summary-item"><span class="fs-icon">🌧️</span><span class="fs-value" id="fsRain">--</span><span class="fs-label">降水</span></div>
                 <div class="fs-divider"></div>
                 <div class="floating-summary-item"><span class="fs-icon">💨</span><span class="fs-value" id="fsWind">--</span><span class="fs-label">风速</span></div>
                 <div class="fs-divider"></div>
@@ -298,6 +300,7 @@
     </div>
 
     <script>
+        // ========== 完整数据与逻辑 ==========
         const LAT = 23.30, LON = 116.66;
         const THRESHOLD_RAIN = 70;
         const CROPS = {
@@ -324,7 +327,7 @@
         ];
 
         let currentCrop = 'guava';
-        let weatherData = { current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 }, forecast: { dates: [], rain: [], tempMax: [], tempMin: [] }, history: { dates: [], rain: [] }, hourly24: { times: [], rain: [], wind: [], soilMoist: [], soilTemp: [], airTemp: [] } };
+        let weatherData = { current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0, airTemp: 0 }, forecast: { dates: [], rain: [], tempMax: [], tempMin: [] }, history: { dates: [], rain: [] }, hourly24: { times: [], rain: [], wind: [], soilMoist: [], soilTemp: [], airTemp: [] } };
         let charts = {};
         let claimModalOpen = false;
         let currentRiskLevelText = '低风险';
@@ -358,26 +361,38 @@
             observer.observe(dashboardSection);
         }
 
+        // 更新悬浮摘要（含天气描述）
         function updateFloatingSummary() {
             const now = new Date();
             const weekdays = ['日','一','二','三','四','五','六'];
             document.getElementById('fsDate').textContent = `${now.getMonth()+1}月${now.getDate()}日 周${weekdays[now.getDay()]}`;
             const c = weatherData.current;
-            document.getElementById('fsRain').textContent = c.rain.toFixed(1) + 'mm';
+            const rain = c.rain;
+            const airTemp = c.airTemp || c.soilTemp;
+
+            // 天气描述
+            let weatherDesc = '晴';
+            let weatherIcon = '☀️';
+            if (rain > 20) { weatherDesc = '大雨'; weatherIcon = '🌧️'; }
+            else if (rain > 5) { weatherDesc = '小雨'; weatherIcon = '🌦️'; }
+            else if (rain > 0.5) { weatherDesc = '零星小雨'; weatherIcon = '🌦️'; }
+            else if (airTemp > 32) { weatherDesc = '晴热'; weatherIcon = '☀️'; }
+            else if (airTemp > 25) { weatherDesc = '晴'; weatherIcon = '☀️'; }
+            else if (airTemp > 18) { weatherDesc = '多云'; weatherIcon = '⛅'; }
+            else { weatherDesc = '凉爽'; weatherIcon = '🌤️'; }
+
+            document.getElementById('fsWeatherIcon').textContent = weatherIcon;
+            document.getElementById('fsWeatherDesc').textContent = weatherDesc;
+            document.getElementById('fsRain').textContent = rain.toFixed(1) + 'mm';
             document.getElementById('fsWind').textContent = c.wind.toFixed(1) + 'm/s';
             document.getElementById('fsMoist').textContent = c.soilMoist + '%';
             document.getElementById('fsTemp').textContent = c.soilTemp.toFixed(1) + '°C';
             document.getElementById('fsRisk').textContent = currentRiskLevelText;
-            const icon = document.getElementById('fsWeatherIcon');
-            if (c.rain > 50) icon.textContent = '🌧️';
-            else if (c.rain > 20) icon.textContent = '🌦️';
-            else if (c.rain > 5) icon.textContent = '⛅';
-            else icon.textContent = '☀️';
         }
 
         async function fetchCurrentWeather() {
             try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation,wind_speed_10m,soil_temperature_0cm,soil_moisture_0_to_1cm&forecast_days=1&timezone=Asia/Shanghai`);
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation,wind_speed_10m,soil_temperature_0cm,soil_moisture_0_to_1cm,temperature_2m&forecast_days=1&timezone=Asia/Shanghai`);
                 const data = await res.json();
                 const hourly = data.hourly;
                 const now = new Date().getHours();
@@ -387,6 +402,7 @@
                 weatherData.current.wind = hourly.wind_speed_10m[i];
                 weatherData.current.soilTemp = hourly.soil_temperature_0cm[i];
                 weatherData.current.soilMoist = Math.round(hourly.soil_moisture_0_to_1cm[i] * 100);
+                weatherData.current.airTemp = hourly.temperature_2m[i];
             } catch(e) { console.error('当前天气获取失败', e); }
         }
 
@@ -443,12 +459,49 @@
 
         function updateCharts() {
             Object.values(charts).forEach(chart => chart?.destroy());
+            // 未来7天降水 — 淡蓝色
             const ctx1 = document.getElementById('forecastRainChart').getContext('2d');
-            charts.forecastRain = new Chart(ctx1, { type: 'bar', data: { labels: weatherData.forecast.dates.map(d => d.slice(5)), datasets: [{ label: '降水量 (mm)', data: weatherData.forecast.rain, backgroundColor: weatherData.forecast.rain.map(v => v > THRESHOLD_RAIN ? '#ef4444' : '#6366f1'), borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } } });
+            charts.forecastRain = new Chart(ctx1, {
+                type: 'bar',
+                data: {
+                    labels: weatherData.forecast.dates.map(d => d.slice(5)),
+                    datasets: [{
+                        label: '降水量 (mm)',
+                        data: weatherData.forecast.rain,
+                        backgroundColor: weatherData.forecast.rain.map(v => v > THRESHOLD_RAIN ? '#fca5a5' : '#93c5fd'),
+                        borderRadius: 4,
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+            });
+            // 未来7天温度
             const ctx2 = document.getElementById('forecastTempChart').getContext('2d');
-            charts.forecastTemp = new Chart(ctx2, { type: 'line', data: { labels: weatherData.forecast.dates.map(d => d.slice(5)), datasets: [{ label: '最高温 °C', data: weatherData.forecast.tempMax, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.3 }, { label: '最低温 °C', data: weatherData.forecast.tempMin, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } }, plugins: { legend: { position: 'bottom' } } } });
+            charts.forecastTemp = new Chart(ctx2, {
+                type: 'line',
+                data: {
+                    labels: weatherData.forecast.dates.map(d => d.slice(5)),
+                    datasets: [
+                        { label: '最高温 °C', data: weatherData.forecast.tempMax, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.3 },
+                        { label: '最低温 °C', data: weatherData.forecast.tempMin, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } }, plugins: { legend: { position: 'bottom' } } }
+            });
+            // 过去7天历史降水 — 青色
             const ctx3 = document.getElementById('historyRainChart').getContext('2d');
-            charts.historyRain = new Chart(ctx3, { type: 'bar', data: { labels: weatherData.history.dates.map(d => d.slice(5)), datasets: [{ label: '历史降水量 (mm)', data: weatherData.history.rain, backgroundColor: '#94a3b8', borderRadius: 4 }] }, options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } } });
+            charts.historyRain = new Chart(ctx3, {
+                type: 'bar',
+                data: {
+                    labels: weatherData.history.dates.map(d => d.slice(5)),
+                    datasets: [{
+                        label: '历史降水量 (mm)',
+                        data: weatherData.history.rain,
+                        backgroundColor: '#5eead4',
+                        borderRadius: 4,
+                    }]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
+            });
         }
 
         function updatePast24hCharts() {
@@ -456,9 +509,13 @@
             const labels = weatherData.hourly24.times.map(t => { const d = new Date(t); return d.getHours() + ':00'; });
             const makeChart = (canvasId, label, data, color, type = 'line') => {
                 const ctx = document.getElementById(canvasId).getContext('2d');
-                return new Chart(ctx, { type, data: { labels, datasets: [{ label, data, borderColor: color, backgroundColor: color + '20', fill: type === 'line', tension: 0.3, pointRadius: 0, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: true, ticks: { maxTicksLimit: 4, font: { size: 10 } } }, y: { display: true, beginAtZero: true, ticks: { font: { size: 10 } } } } } });
+                return new Chart(ctx, {
+                    type,
+                    data: { labels, datasets: [{ label, data, borderColor: color, backgroundColor: color + '20', fill: type === 'line', tension: 0.3, pointRadius: 0, borderWidth: 2 }] },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: true, ticks: { maxTicksLimit: 4, font: { size: 10 } } }, y: { display: true, beginAtZero: true, ticks: { font: { size: 10 } } } } }
+                });
             };
-            charts.hourlyRain = makeChart('hourlyRainChart', '降水 (mm)', weatherData.hourly24.rain, '#6366f1', 'bar');
+            charts.hourlyRain = makeChart('hourlyRainChart', '降水 (mm)', weatherData.hourly24.rain, '#93c5fd', 'bar');
             charts.hourlyWind = makeChart('hourlyWindChart', '风速 (m/s)', weatherData.hourly24.wind, '#f59e0b');
             charts.hourlyMoist = makeChart('hourlyMoistChart', '土壤湿度 (%)', weatherData.hourly24.soilMoist, '#3b82f6');
             charts.hourlySoilTemp = makeChart('hourlySoilTempChart', '土壤温度 (°C)', weatherData.hourly24.soilTemp, '#ef4444');
