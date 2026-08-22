@@ -7,7 +7,6 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
-        /* 基础样式 */
         .circle { border-radius: 50%; }
         .ring {
             width: 60px; height: 60px; border-radius: 50%;
@@ -655,7 +654,6 @@
         // 更新保险推荐（多产品卡片，可展开）
         function updateInsurance() {
             const container = document.getElementById('insuranceContent');
-            // 根据当前作物过滤可用的保险产品
             const applicableProducts = INSURANCE_PRODUCTS.filter(p => p.applicableCrops.includes(currentCrop));
 
             if (applicableProducts.length === 0) {
@@ -704,13 +702,11 @@
             });
             container.innerHTML = html;
 
-            // 更新KPI中的保险状态文本
             const riskLevel = getRiskLevel();
             document.getElementById('insuranceStatus').textContent = riskLevel + '风险';
             document.getElementById('insuranceBadge').textContent = riskLevel === '高' ? '需关注' : '已激活';
         }
 
-        // 辅助函数：计算当前风险等级
         function getRiskLevel() {
             const fc = weatherData.forecast;
             const rainTotal = fc.rain.reduce((a,b)=>a+b,0);
@@ -719,14 +715,13 @@
             else return '低';
         }
 
-        // 切换保险卡展开状态
         function toggleInsurance(id) {
             if (expandedInsuranceId === id) {
                 expandedInsuranceId = null;
             } else {
                 expandedInsuranceId = id;
             }
-            updateInsurance(); // 重新渲染，只更新展开状态
+            updateInsurance();
         }
 
         // 渲染农业政策（可展开）
@@ -764,7 +759,6 @@
             }).join('');
         }
 
-        // 切换政策卡展开状态
         function togglePolicy(id) {
             if (expandedPolicyId === id) {
                 expandedPolicyId = null;
@@ -774,21 +768,14 @@
             renderPolicy();
         }
 
-        // 刷新政策（模拟重新获取，打乱顺序）
         function refreshPolicy() {
             const shuffled = [...POLICY_DB].sort(() => Math.random() - 0.5);
             POLICY_DB.length = 0;
             POLICY_DB.push(...shuffled);
             renderPolicy();
             alert('政策已更新（演示数据）');
-            // 恢复原顺序（避免永久改变）
-            POLICY_DB.length = 0;
-            POLICY_DB.push(...shuffled); // 保持打乱后的顺序，但为了演示可以保持随机
-            // 注意：这里只是临时更新，实际使用中可替换为API调用
-            renderPolicy();
         }
 
-        // 作物切换
         function onCropChange() {
             currentCrop = document.getElementById('cropSelect').value;
             updateAdvice();
@@ -806,7 +793,6 @@
             if (badge) badge.style.display = 'none';
         }
 
-        // 关闭理赔模态框
         function closeClaimModal() {
             claimModalOpen = false;
             document.getElementById('claimModal').classList.remove('active');
@@ -815,7 +801,6 @@
             if (badge) badge.style.display = 'flex';
         }
 
-        // 填充理赔模态框数据
         function populateClaimModal() {
             const crop = CROPS[currentCrop];
             const rain = weatherData.current.rain;
