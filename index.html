@@ -23,28 +23,37 @@
             .floating-summary {
                 display: none !important;
             }
-            /* 移动端底部导航栏：均匀填充一行 */
+            /* 移动端底部导航栏：确保一行均匀排列 */
             .mobile-bottom-nav {
                 display: flex;
-                height: 48px;
-                background: #fff;
+                height: 56px;
+                background: #ffffff;
                 border-top: 1px solid #e5e7eb;
                 box-shadow: 0 -2px 8px rgba(0,0,0,0.03);
+                position: fixed;
+                bottom: 0;
+                left: 0;
+                right: 0;
+                z-index: 60;
             }
             .mobile-bottom-nav a {
-                flex: 1;
+                flex: 1 1 0%;
+                min-width: 0;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 justify-content: center;
+                padding: 0 4px;
                 font-size: 0.6rem;
                 color: #6b7280;
                 text-decoration: none;
                 white-space: nowrap;
+                line-height: 1.2;
             }
             .mobile-bottom-nav a span {
-                font-size: 1rem;
-                line-height: 1.2;
+                font-size: 1.25rem;
+                line-height: 1;
+                margin-bottom: 2px;
             }
             .mobile-bottom-nav a.active {
                 color: #6366f1;
@@ -318,15 +327,13 @@
         </div>
     </div>
 
-    <!-- 移动端底部导航栏：元素均匀填充 -->
-    <nav class="mobile-bottom-nav fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-50 md:hidden">
-        <div class="flex items-center h-full">
-            <a href="#dashboard" class="flex-1 flex flex-col items-center justify-center py-1 text-xs text-gray-500"><span class="text-lg">📊</span>概览</a>
-            <a href="#forecast" class="flex-1 flex flex-col items-center justify-center py-1 text-xs text-gray-500"><span class="text-lg">📈</span>预测</a>
-            <a href="#hourly24" class="flex-1 flex flex-col items-center justify-center py-1 text-xs text-gray-500"><span class="text-lg">🕒</span>监测</a>
-            <a href="#myinsurance" class="flex-1 flex flex-col items-center justify-center py-1 text-xs text-gray-500"><span class="text-lg">📑</span>保单</a>
-            <a href="#advice" class="flex-1 flex flex-col items-center justify-center py-1 text-xs text-gray-500"><span class="text-lg">💡</span>建议</a>
-        </div>
+    <!-- 移动端底部导航栏：修正堆叠问题 -->
+    <nav class="mobile-bottom-nav" aria-label="移动端底部导航">
+        <a href="#dashboard" class="flex-1 flex flex-col items-center justify-center text-xs text-gray-500"><span>📊</span>概览</a>
+        <a href="#forecast" class="flex-1 flex flex-col items-center justify-center text-xs text-gray-500"><span>📈</span>预测</a>
+        <a href="#hourly24" class="flex-1 flex flex-col items-center justify-center text-xs text-gray-500"><span>🕒</span>监测</a>
+        <a href="#myinsurance" class="flex-1 flex flex-col items-center justify-center text-xs text-gray-500"><span>📑</span>保单</a>
+        <a href="#advice" class="flex-1 flex flex-col items-center justify-center text-xs text-gray-500"><span>💡</span>建议</a>
     </nav>
 
     <div class="modal-overlay" id="claimModal">
@@ -344,7 +351,7 @@
     </div>
 
     <script>
-        // ========== 数据与配置（省略部分，与上一版完全相同） ==========
+        // ========== 数据与配置（同前，省略以节省篇幅，实际使用时请保留完整逻辑） ==========
         const LAT = 23.30, LON = 116.66;
         const THRESHOLD_RAIN = 70;
         const CROPS = {
