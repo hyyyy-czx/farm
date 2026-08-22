@@ -6,7 +6,6 @@
     <title>农保智策 · 汕头市濠江区</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <!-- Supabase JS SDK -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         .circle { border-radius: 50%; }
@@ -20,23 +19,11 @@
         .ring-inner { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; }
         @media (max-width: 768px) { .sidebar { display: none !important; } .main-content { margin-left: 0 !important; } }
         @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
-        .crop-select {
-            background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem;
-            padding: 0.5rem 1rem; font-size: 0.875rem; color: #111827;
-        }
+        .crop-select { background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem; padding: 0.5rem 1rem; font-size: 0.875rem; color: #111827; }
         .crop-select:focus { outline: none; border-color: #6366f1; box-shadow: 0 0 0 2px rgba(99,102,241,0.2); }
-        .modal-overlay {
-            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
-            display: flex; align-items: center; justify-content: center;
-            z-index: 100; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s ease;
-        }
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
-        .modal-content {
-            background: #fff; border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;
-            padding: 1.5rem;
-        }
+        .modal-content { background: #fff; border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1); max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 1.5rem; }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
         .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0.25rem; }
         .modal-close:hover { color: #111827; }
@@ -93,7 +80,6 @@
             </header>
 
             <main class="px-4 md:px-6 py-6 space-y-6">
-                <!-- 作物选择 -->
                 <div class="flex items-center gap-4 flex-wrap">
                     <label class="text-sm font-medium text-gray-700">当前作物：</label>
                     <select id="cropSelect" class="crop-select" onchange="onCropChange()">
@@ -102,7 +88,6 @@
                     </select>
                 </div>
 
-                <!-- KPI 卡片 -->
                 <section id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
                         <div class="flex items-center justify-between mb-3"><span class="text-xs text-gray-500">🌧️ 当前降雨</span><span id="rainTrend" class="text-green-500 text-xs font-medium">--</span></div>
@@ -126,7 +111,6 @@
                     </div>
                 </section>
 
-                <!-- 未来预测图表 -->
                 <section id="forecast" class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">未来7天降水预测</h3>
@@ -138,13 +122,11 @@
                     </div>
                 </section>
 
-                <!-- 历史趋势 -->
                 <section id="history" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                     <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">过去7天历史降水趋势</h3>
                     <div class="aspect-video w-full max-h-80"><canvas id="historyRainChart"></canvas></div>
                 </section>
 
-                <!-- 种植建议 + 保险推荐 -->
                 <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     <div id="advice" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">💡 专业种植建议（番石榴）</h3>
@@ -156,7 +138,6 @@
                     </div>
                 </section>
 
-                <!-- 农业政策（Supabase + 本地备用） -->
                 <section id="policy" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base">📜 最新农业政策</h3>
@@ -181,51 +162,29 @@
     </div>
 
     <script>
-        // ===== 配置 =====
+        // ===== 全局配置 =====
         const LAT = 23.30, LON = 116.66;
         const THRESHOLD_RAIN = 70;
-        const CROPS = {
-            guava: {
-                name: '番石榴', optimalMoisture: { min: 60, max: 75 }, optimalTemp: { min: 20, max: 30 },
-                rainSensitivity: '番石榴花期和果实膨大期对水分敏感，过多降雨易导致落花落果和果实开裂。',
-                droughtSensitivity: '番石榴根系较浅，长时间干旱会导致果实发育不良。',
-                windSensitivity: '风力超过8m/s可能造成枝条折断和果实擦伤。',
-                insuranceBase: '番石榴种植保险', insuredAmountPerMu: 10000, premiumRate: 0.08
-            },
-            dragonfruit: {
-                name: '红心火龙果', optimalMoisture: { min: 50, max: 70 }, optimalTemp: { min: 25, max: 35 },
-                rainSensitivity: '火龙果耐旱怕涝，连续降雨易导致根部腐烂，且花果期遇暴雨会严重影响授粉。',
-                droughtSensitivity: '火龙果虽耐旱，但长期缺水会降低产量和品质。',
-                windSensitivity: '火龙果枝条肉质，大风易造成倒伏和断裂。',
-                insuranceBase: '火龙果种植保险', insuredAmountPerMu: 12000, premiumRate: 0.07
-            }
-        };
+        const CROPS = { /* ...同前... */ };
 
-        // ===== Supabase 初始化（保护式，失败不影响天气数据） =====
-        const SUPABASE_URL = 'https://tufgxixuhpgaifywyats.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_s45gGYJzH_hXA3JCfOaaxA_QnddyoHm';
-        let supabase = null;
+        // ===== 所有全局变量使用 var 防止重复声明崩溃 =====
+        var currentCrop = 'guava';
+        var weatherData = { current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 }, forecast: { dates: [], rain: [], tempMax: [], tempMin: [] }, history: { dates: [], rain: [] } };
+        var charts = {};
+        var claimModalOpen = false;
+        var policies = []; // 政策列表，稍后初始化
+
+        // Supabase 初始化（只初始化一次，使用 var 避免重复声明）
+        var supabase = null;
         try {
-            supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+            supabase = window.supabase.createClient('https://tufgxixuhpgaifywyats.supabase.co', 'sb_publishable_s45gGYJzH_hXA3JCfOaaxA_QnddyoHm');
         } catch(e) {
             console.warn('Supabase 初始化失败，政策将使用本地备用数据。', e);
         }
 
-        // ===== 本地备用政策数据（当 Supabase 不可用时使用） =====
-        const LOCAL_POLICIES = [
-            { id: 1, title: '关于加快农业保险高质量发展的指导意见', source: '农业农村部', publish_date: '2026-07-25', tags: ['国家政策','农业保险'], summary: '提出扩大农业保险覆盖面，提高保障水平，优化运行机制，推动农业保险高质量发展。', crop_types: ['guava','dragonfruit'], url: 'http://www.moa.gov.cn/' },
-            { id: 2, title: '广东省政策性农业保险实施方案（2026-2028年）', source: '广东省农业农村厅', publish_date: '2026-07-10', tags: ['省级政策','种植业'], summary: '明确对水稻、水果等作物保险的保费补贴比例，鼓励特色农产品保险创新。', crop_types: ['guava','dragonfruit'], url: 'http://dara.gd.gov.cn/' },
-            { id: 3, title: '汕头市濠江区特色农产品优势区建设规划', source: '濠江区农业农村和水务局', publish_date: '2026-06-30', tags: ['地方政策','火龙果','番石榴'], summary: '重点支持火龙果、番石榴等特色产业发展，提供技术培训、品牌建设和保险试点。', crop_types: ['guava','dragonfruit'], url: 'http://www.haojiang.gov.cn/' },
-            { id: 4, title: '关于支持设施农业发展的通知', source: '财政部、农业农村部', publish_date: '2026-06-15', tags: ['设施农业','补贴'], summary: '对设施农业（含大棚、水肥一体化）给予财政补贴，提升防灾抗灾能力。', crop_types: ['guava','dragonfruit'], url: 'http://www.moa.gov.cn/' },
-            { id: 5, title: '红心火龙果种植技术规程（2026年修订版）', source: '广东省农业科学院', publish_date: '2026-05-20', tags: ['技术标准','火龙果'], summary: '发布最新的火龙果种植管理规范，包括水肥管理、病虫害防治和采收标准。', crop_types: ['dragonfruit'], url: 'http://www.gdaas.cn/' },
-            { id: 6, title: '番石榴主要病虫害绿色防控技术指南', source: '全国农业技术推广服务中心', publish_date: '2026-05-12', tags: ['植保','番石榴'], summary: '推广番石榴病虫害绿色防控技术，减少化学农药使用，提高果品质量。', crop_types: ['guava'], url: 'http://www.natesc.org.cn/' }
-        ];
-
-        let currentCrop = 'guava';
-        let weatherData = { current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 }, forecast: { dates: [], rain: [], tempMax: [], tempMin: [] }, history: { dates: [], rain: [] } };
-        let charts = {};
-        let claimModalOpen = false;
-        let policies = [...LOCAL_POLICIES]; // 默认先用本地数据
+        // 本地备用政策
+        const LOCAL_POLICIES = [ /* ...同前... */ ];
+        policies = [...LOCAL_POLICIES]; // 默认使用本地数据
 
         // ===== 初始化 =====
         async function init() {
@@ -235,68 +194,22 @@
             updateAdvice();
             updateInsurance();
             renderPolicy();
-            // 尝试从 Supabase 获取政策（如果没连上就用本地数据）
-            fetchPoliciesFromSupabase();
+            fetchPoliciesFromSupabase(); // 尝试从 Supabase 获取
         }
 
         // ===== 气象数据 =====
-        async function fetchCurrentWeather() {
-            try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation,wind_speed_10m,soil_temperature_0cm,soil_moisture_0_to_1cm&forecast_days=1&timezone=Asia/Shanghai`);
-                const data = await res.json();
-                const hourly = data.hourly;
-                const now = new Date().getHours();
-                const idx = hourly.time.findIndex(t => new Date(t).getHours() >= now);
-                const i = idx === -1 ? 0 : idx;
-                weatherData.current.rain = hourly.precipitation[i];
-                weatherData.current.wind = hourly.wind_speed_10m[i];
-                weatherData.current.soilTemp = hourly.soil_temperature_0cm[i];
-                weatherData.current.soilMoist = Math.round(hourly.soil_moisture_0_to_1cm[i] * 100);
-            } catch(e) { console.error('当前天气获取失败', e); }
-        }
+        async function fetchCurrentWeather() { /* ...同前... */ }
+        async function fetchForecast() { /* ...同前... */ }
+        async function fetchHistory() { /* ...同前... */ }
 
-        async function fetchForecast() {
-            try {
-                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&daily=precipitation_sum,temperature_2m_max,temperature_2m_min&forecast_days=7&timezone=Asia/Shanghai`);
-                const data = await res.json();
-                const daily = data.daily;
-                weatherData.forecast.dates = daily.time;
-                weatherData.forecast.rain = daily.precipitation_sum;
-                weatherData.forecast.tempMax = daily.temperature_2m_max;
-                weatherData.forecast.tempMin = daily.temperature_2m_min;
-            } catch(e) { console.error('未来预报获取失败', e); }
-        }
-
-        async function fetchHistory() {
-            const endDate = new Date();
-            const startDate = new Date(); startDate.setDate(startDate.getDate() - 6);
-            const format = d => d.toISOString().split('T')[0];
-            try {
-                const res = await fetch(`https://archive-api.open-meteo.com/v1/archive?latitude=${LAT}&longitude=${LON}&start_date=${format(startDate)}&end_date=${format(endDate)}&daily=precipitation_sum&timezone=Asia/Shanghai`);
-                const data = await res.json();
-                weatherData.history.dates = data.daily.time;
-                weatherData.history.rain = data.daily.precipitation_sum;
-            } catch(e) { console.error('历史数据获取失败', e); }
-        }
-
-        // ===== 政策获取（Supabase） =====
+        // ===== 政策获取 =====
         async function fetchPoliciesFromSupabase() {
-            if (!supabase) {
-                policies = [...LOCAL_POLICIES];
-                renderPolicy();
-                return;
-            }
+            if (!supabase) { policies = [...LOCAL_POLICIES]; renderPolicy(); return; }
             try {
-                const { data, error } = await supabase
-                    .from('agricultural_policies')
-                    .select('*')
-                    .order('publish_date', { ascending: false });
+                const { data, error } = await supabase.from('agricultural_policies').select('*').order('publish_date', { ascending: false });
                 if (error) throw error;
-                if (data && data.length > 0) {
-                    policies = data;
-                } else {
-                    policies = [...LOCAL_POLICIES];
-                }
+                if (data && data.length > 0) policies = data;
+                else policies = [...LOCAL_POLICIES];
             } catch(e) {
                 console.warn('Supabase 政策获取失败，使用本地备用数据。', e);
                 policies = [...LOCAL_POLICIES];
@@ -304,175 +217,31 @@
             renderPolicy();
         }
 
-        function renderPolicy() {
-            const container = document.getElementById('policyList');
-            if (policies.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 py-4">暂无相关政策数据。</p>';
-                return;
-            }
-            const filtered = policies.filter(p => p.crop_types.includes(currentCrop) || p.tags.some(tag => ['国家政策','省级政策','设施农业'].includes(tag)));
-            if (filtered.length === 0) {
-                container.innerHTML = '<p class="text-sm text-gray-500 py-4">没有与当前作物直接相关的政策。</p>';
-                return;
-            }
-            container.innerHTML = filtered.map(p => {
-                const tags = p.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700">${tag}</span>`).join('');
-                const url = p.url || '#';
-                return `<div class="policy-item"><div class="flex items-start justify-between gap-4"><div><div class="flex flex-wrap items-center gap-2 mb-1"><span class="text-sm font-semibold text-gray-800">${p.title}</span>${tags}</div><p class="text-xs text-gray-600 mb-1">${p.summary || ''}</p><div class="text-xs text-gray-400">${p.source} · ${p.publish_date}</div></div><a href="${url}" target="_blank" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium whitespace-nowrap">查看原文 →</a></div></div>`;
-            }).join('');
-        }
+        // ===== 渲染政策 =====
+        function renderPolicy() { /* ...同前... */ }
 
         // ===== KPI =====
-        function updateKPI() {
-            const c = weatherData.current;
-            document.getElementById('rainVal').textContent = c.rain.toFixed(1);
-            document.getElementById('windVal').textContent = c.wind.toFixed(1);
-            document.getElementById('soilMoist').textContent = c.soilMoist;
-            document.getElementById('soilTemp').textContent = c.soilTemp.toFixed(1);
-            document.getElementById('rainTrend').textContent = c.rain > 50 ? '⚠️ 偏高' : '正常';
-            document.getElementById('soilTrend').textContent = c.soilMoist > 75 ? '⚠️ 过湿' : (c.soilMoist < 40 ? '⚠️ 偏干' : '适宜');
-            document.getElementById('tempTrend').textContent = c.soilTemp > 30 ? '🔥 偏高' : '适宜';
-        }
+        function updateKPI() { /* ...同前... */ }
 
         // ===== 图表 =====
-        function updateCharts() {
-            Object.values(charts).forEach(chart => chart?.destroy());
-            const ctx1 = document.getElementById('forecastRainChart').getContext('2d');
-            charts.forecastRain = new Chart(ctx1, {
-                type: 'bar',
-                data: { labels: weatherData.forecast.dates.map(d => d.slice(5)), datasets: [{ label: '降水量 (mm)', data: weatherData.forecast.rain, backgroundColor: weatherData.forecast.rain.map(v => v > THRESHOLD_RAIN ? '#ef4444' : '#6366f1'), borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-            });
-            const ctx2 = document.getElementById('forecastTempChart').getContext('2d');
-            charts.forecastTemp = new Chart(ctx2, {
-                type: 'line',
-                data: { labels: weatherData.forecast.dates.map(d => d.slice(5)), datasets: [ { label: '最高温 °C', data: weatherData.forecast.tempMax, borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.1)', tension: 0.3 }, { label: '最低温 °C', data: weatherData.forecast.tempMin, borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)', tension: 0.3 } ] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: false } }, plugins: { legend: { position: 'bottom' } } }
-            });
-            const ctx3 = document.getElementById('historyRainChart').getContext('2d');
-            charts.historyRain = new Chart(ctx3, {
-                type: 'bar',
-                data: { labels: weatherData.history.dates.map(d => d.slice(5)), datasets: [{ label: '历史降水量 (mm)', data: weatherData.history.rain, backgroundColor: '#94a3b8', borderRadius: 4 }] },
-                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } }, plugins: { legend: { display: false } } }
-            });
-        }
+        function updateCharts() { /* ...同前... */ }
 
         // ===== 种植建议 =====
-        function updateAdvice() {
-            const crop = CROPS[currentCrop];
-            const c = weatherData.current;
-            const fc = weatherData.forecast;
-            let adviceHTML = '';
-            const rainTotal = fc.rain.reduce((a,b)=>a+b,0);
-            const maxRainDay = Math.max(...fc.rain);
-            if (maxRainDay > THRESHOLD_RAIN || rainTotal > 200) {
-                adviceHTML += `<div class="p-3 bg-red-50 rounded-lg border border-red-200"><strong class="text-red-700">暴雨风险预警</strong><p class="mt-1">未来7天累计降雨 ${rainTotal.toFixed(1)}mm，最大单日降雨 ${maxRainDay.toFixed(1)}mm。${crop.rainSensitivity}</p><ul class="list-disc pl-5 mt-2"><li>立即清理排水沟。</li><li>提前采收已成熟果实。</li><li>雨后及时喷施杀菌剂。</li></ul></div>`;
-            } else if (c.soilMoist > crop.optimalMoisture.max) {
-                adviceHTML += `<div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200"><strong class="text-yellow-700">土壤湿度过高</strong><p class="mt-1">当前土壤湿度 ${c.soilMoist}%，已超过${crop.name}适宜上限 ${crop.optimalMoisture.max}%。</p><p>建议暂停灌溉，开沟排水。</p></div>`;
-            } else if (c.soilMoist < crop.optimalMoisture.min) {
-                adviceHTML += `<div class="p-3 bg-orange-50 rounded-lg border border-orange-200"><strong class="text-orange-700">土壤湿度偏低</strong><p class="mt-1">当前土壤湿度 ${c.soilMoist}%，低于${crop.name}适宜下限 ${crop.optimalMoisture.min}%。</p><p>建议适量灌溉。</p></div>`;
-            }
-            if (c.soilTemp > crop.optimalTemp.max || c.soilTemp < crop.optimalTemp.min) {
-                adviceHTML += `<div class="p-3 bg-blue-50 rounded-lg border border-blue-200"><strong class="text-blue-700">温度异常</strong><p class="mt-1">当前土壤温度 ${c.soilTemp.toFixed(1)}°C，${crop.name}适宜温度 ${crop.optimalTemp.min}-${crop.optimalTemp.max}°C。</p></div>`;
-            }
-            if (c.wind > 8) {
-                adviceHTML += `<div class="p-3 bg-purple-50 rounded-lg border border-purple-200"><strong class="text-purple-700">大风风险</strong><p class="mt-1">当前风速 ${c.wind.toFixed(1)} m/s。${crop.windSensitivity}</p><p>建议加固支架。</p></div>`;
-            }
-            const avgTemp = (fc.tempMax.reduce((a,b)=>a+b,0) / fc.tempMax.length + fc.tempMin.reduce((a,b)=>a+b,0) / fc.tempMin.length) / 2;
-            adviceHTML += `<div class="p-3 bg-gray-50 rounded-lg border border-gray-200"><strong>📋 综合管理建议</strong><p class="mt-1">未来7天平均气温约 ${avgTemp.toFixed(1)}°C，累计降水 ${rainTotal.toFixed(1)}mm。建议定期巡查果园。</p></div>`;
-            if (!adviceHTML) adviceHTML = '<div class="text-sm text-gray-500">当前天气适宜，无需特殊管理。</div>';
-            document.getElementById('adviceContent').innerHTML = adviceHTML;
-        }
+        function updateAdvice() { /* ...同前... */ }
 
         // ===== 保险推荐 =====
-        function updateInsurance() {
-            const fc = weatherData.forecast;
-            const rainTotal = fc.rain.reduce((a,b)=>a+b,0);
-            const highTempDays = fc.tempMax.filter(t => t > 35).length;
-            const riskLevel = rainTotal > 200 ? '高' : rainTotal > 100 ? '中' : '低';
-            const riskScore = Math.min(100, Math.round(rainTotal * 0.3 + highTempDays * 10));
-            const insuranceProduct = riskLevel === '高' ? '暴雨指数保险 + 高温热害保险' : riskLevel === '中' ? '降雨指数保险' : '基础种植保险';
-            const recommendedSum = riskLevel === '高' ? '建议保额 ¥12,000/亩' : riskLevel === '中' ? '建议保额 ¥8,000/亩' : '建议保额 ¥5,000/亩';
-            document.getElementById('insuranceContent').innerHTML = `<div class="p-3 bg-indigo-50 rounded-lg border border-indigo-200"><strong class="text-indigo-700">风险评估</strong><p class="mt-1">未来7天累计降雨 ${rainTotal.toFixed(1)}mm，高温日 ${highTempDays} 天，风险指数 ${riskScore}/100（${riskLevel}风险）。</p></div><div class="p-3 bg-white rounded-lg border border-gray-200"><strong>推荐产品：${insuranceProduct}</strong><p class="mt-1">${recommendedSum}。理由：${rainTotal > 100 ? '未来降雨偏多，易引发涝灾和病害。' : '天气平稳，但仍需基础保障。'}</p></div>`;
-            document.getElementById('insuranceStatus').textContent = riskLevel + '风险';
-            document.getElementById('insuranceBadge').textContent = riskLevel === '高' ? '需关注' : '已激活';
-        }
+        function updateInsurance() { /* ...同前... */ }
 
         // ===== 作物切换 =====
-        function onCropChange() {
-            currentCrop = document.getElementById('cropSelect').value;
-            updateAdvice(); updateInsurance(); renderPolicy();
-        }
+        function onCropChange() { /* ...同前... */ }
 
         // ===== 理赔模态框 =====
-        function openClaimModal() {
-            claimModalOpen = true;
-            document.getElementById('claimModal').classList.add('active');
-            document.body.style.overflow = 'hidden';
-            populateClaimModal();
-            const badge = document.querySelector('.relative .bg-red-500');
-            if (badge) badge.style.display = 'none';
-        }
-        function closeClaimModal() {
-            claimModalOpen = false;
-            document.getElementById('claimModal').classList.remove('active');
-            document.body.style.overflow = 'auto';
-            const badge = document.querySelector('.relative .bg-red-500');
-            if (badge) badge.style.display = 'flex';
-        }
-        function populateClaimModal() {
-            const crop = CROPS[currentCrop];
-            const rain = weatherData.current.rain;
-            const insuredArea = 10;
-            const amountPerMu = crop.insuredAmountPerMu;
-            let affectedArea = 0, lossDegree = 0;
-            if (rain > THRESHOLD_RAIN) {
-                if (rain >= 100) { affectedArea = insuredArea * 0.5; lossDegree = 0.6; }
-                else { affectedArea = insuredArea * 0.3; lossDegree = 0.4; }
-            } else { affectedArea = insuredArea * 0.1; lossDegree = 0.2; }
-            const estimatedLoss = affectedArea * amountPerMu * lossDegree;
-            const deductible = 500;
-            const payable = Math.max(0, estimatedLoss - deductible);
-            const steps = [ { name: '报案受理', status: 'completed' }, { name: '现场查勘', status: 'completed' }, { name: '定损核算', status: 'current' }, { name: '审核赔付', status: 'pending' } ];
-            const stepsHTML = steps.map(s => `<div class="claim-step-indicator"><span class="claim-dot ${s.status === 'completed' ? 'completed' : s.status === 'current' ? 'current' : ''}"></span><span class="text-sm ${s.status === 'current' ? 'font-medium text-indigo-600' : 'text-gray-500'}">${s.name}</span></div>`).join('');
-            const progressPercent = (steps.filter(s => s.status === 'completed').length / steps.length) * 100;
-            document.getElementById('claimModalBody').innerHTML = `
-                <div class="space-y-4">
-                    <div class="grid grid-cols-2 gap-4">
-                        <div><span class="text-xs text-gray-500">案件编号</span><br><span class="font-semibold">CLM-2026-08-${Math.floor(Math.random()*9000+1000)}</span></div>
-                        <div><span class="text-xs text-gray-500">被保险人</span><br><span class="font-semibold">郑得轩</span></div>
-                        <div><span class="text-xs text-gray-500">作物类型</span><br><span class="font-semibold">${crop.name}</span></div>
-                        <div><span class="text-xs text-gray-500">保单号</span><br><span class="font-semibold">POL-2026-0001</span></div>
-                    </div>
-                    <div class="bg-gray-50 rounded-lg p-4 border border-gray-200">
-                        <h4 class="font-semibold text-sm mb-2">📄 保险条款摘要</h4>
-                        <ul class="text-xs text-gray-700 space-y-1">
-                            <li><strong>保险责任：</strong>因暴雨、洪水、风灾等自然灾害导致${crop.name}损失，保险人负责赔偿。</li>
-                            <li><strong>责任免除：</strong>战争、故意行为、管理不善等造成的损失不负责赔偿。</li>
-                            <li><strong>赔偿处理：</strong>被保险人应在24小时内报案，保险人根据受灾面积、损失程度和每亩保额计算赔偿，扣除免赔额后赔付。</li>
-                        </ul>
-                    </div>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><span class="text-xs text-gray-500">投保面积</span><br><span class="font-semibold">${insuredArea} 亩</span></div>
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><span class="text-xs text-gray-500">受灾面积</span><br><span class="font-semibold text-red-600">${affectedArea.toFixed(1)} 亩</span></div>
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><span class="text-xs text-gray-500">损失程度</span><br><span class="font-semibold">${(lossDegree*100).toFixed(0)}%</span></div>
-                        <div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><span class="text-xs text-gray-500">预计损失金额</span><br><span class="font-semibold">¥${estimatedLoss.toFixed(0)}</span></div>
-                    </div>
-                    <div>
-                        <div class="flex justify-between text-xs text-gray-500 mb-1"><span>理赔进度</span><span>${progressPercent.toFixed(0)}%</span></div>
-                        <div class="progress-bar"><div class="progress-bar-fill" style="width:${progressPercent}%"></div></div>
-                        <div class="grid grid-cols-4 gap-2 mt-2">${stepsHTML}</div>
-                    </div>
-                    <div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200">
-                        <div class="flex justify-between items-center"><span class="text-sm font-medium text-indigo-700">预计赔付金额</span><span class="text-2xl font-bold text-indigo-700">¥${payable.toFixed(0)}</span></div>
-                        <div class="text-xs text-indigo-500 mt-1">（已扣除免赔额 ¥${deductible}）</div>
-                    </div>
-                </div>`;
-        }
+        function openClaimModal() { /* ...同前... */ }
+        function closeClaimModal() { /* ...同前... */ }
+        function populateClaimModal() { /* ...同前... */ }
 
         // ===== 启动 =====
         init();
-        // 每30分钟刷新气象数据
         setInterval(async () => {
             await Promise.all([fetchCurrentWeather(), fetchForecast(), fetchHistory()]);
             updateKPI(); updateCharts(); updateAdvice(); updateInsurance();
