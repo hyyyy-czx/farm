@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>农保智策 · 汕头市濠江区</title>
+    <title>农保智策 · 智慧农业保险服务平台</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
     <style>
@@ -19,11 +19,7 @@
         @media (max-width: 768px) {
             .sidebar { display: none !important; }
             .main-content { margin-left: 0 !important; padding-bottom: 70px; }
-            /* 移动端屏蔽悬浮胶囊 */
-            .floating-summary {
-                display: none !important;
-            }
-            /* 移动端底部导航栏：确保一行均匀排列 */
+            .floating-summary { display: none !important; }
             .mobile-bottom-nav {
                 display: flex;
                 height: 56px;
@@ -50,15 +46,8 @@
                 white-space: nowrap;
                 line-height: 1.2;
             }
-            .mobile-bottom-nav a span {
-                font-size: 1.25rem;
-                line-height: 1;
-                margin-bottom: 2px;
-            }
-            .mobile-bottom-nav a.active {
-                color: #6366f1;
-                font-weight: 600;
-            }
+            .mobile-bottom-nav a span { font-size: 1.25rem; line-height: 1; margin-bottom: 2px; }
+            .mobile-bottom-nav a.active { color: #6366f1; font-weight: 600; }
         }
         @media (min-width: 769px) {
             .mobile-bottom-nav { display: none; }
@@ -205,7 +194,10 @@
         <div class="flex-1 ml-56 main-content">
             <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-4 md:px-6 py-3">
                 <div class="flex items-center justify-between gap-4">
-                    <div class="text-sm font-medium text-gray-500">农保智策 · 汕头市濠江区 · 郑得轩</div>
+                    <!-- 修改后的高大上标题 -->
+                    <div class="text-sm font-semibold text-gray-700">
+                        🌾 农保智策 · 智慧农业保险服务平台
+                    </div>
                     <div class="flex items-center gap-3 shrink-0">
                         <button onclick="openClaimModal()" title="查看理赔详情（模拟理赔）" aria-label="打开理赔详情" class="relative p-2 rounded-lg hover:bg-gray-50 transition-colors duration-150 focus:outline-none focus:ring-2 focus:ring-[#6366f1]/30">
                             <span class="text-xl">🔔</span>
@@ -327,7 +319,7 @@
         </div>
     </div>
 
-    <!-- 移动端底部导航栏：修正堆叠问题 -->
+    <!-- 移动端底部导航栏 -->
     <nav class="mobile-bottom-nav" aria-label="移动端底部导航">
         <a href="#dashboard" class="flex-1 flex flex-col items-center justify-center text-xs text-gray-500"><span>📊</span>概览</a>
         <a href="#forecast" class="flex-1 flex flex-col items-center justify-center text-xs text-gray-500"><span>📈</span>预测</a>
@@ -351,7 +343,7 @@
     </div>
 
     <script>
-        // ========== 数据与配置（同前，省略以节省篇幅，实际使用时请保留完整逻辑） ==========
+        // ========== 完整数据与逻辑（保持与上一版一致） ==========
         const LAT = 23.30, LON = 116.66;
         const THRESHOLD_RAIN = 70;
         const CROPS = {
