@@ -16,7 +16,34 @@
             border: 4px solid #fff; box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
         .ring-inner { width: 46px; height: 46px; border-radius: 50%; background: #fff; display: flex; align-items: center; justify-content: center; }
-        @media (max-width: 768px) { .sidebar { display: none !important; } .main-content { margin-left: 0 !important; } .floating-summary { left: 50% !important; } }
+        @media (max-width: 768px) {
+            .sidebar { display: none !important; }
+            .main-content { margin-left: 0 !important; padding-bottom: 70px; }
+            /* 移动端胶囊改为底部悬浮条 */
+            .floating-summary {
+                top: auto;
+                bottom: 60px;
+                left: 50%;
+                transform: translateX(-50%) translateY(20px);
+                border-radius: 999px;
+                padding: 0.25rem 0.75rem;
+                gap: 0.5rem;
+                max-width: 90vw;
+                font-size: 0.75rem;
+            }
+            .floating-summary.visible { transform: translateX(-50%) translateY(0); }
+            .floating-summary .fs-divider { display: none; }
+            .mobile-hide { display: none !important; }
+            /* 底部导航 */
+            .mobile-bottom-nav {
+                display: flex;
+            }
+        }
+        @media (min-width: 769px) {
+            .mobile-bottom-nav {
+                display: none;
+            }
+        }
         @media (prefers-reduced-motion: reduce) { * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
         .crop-select {
             background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 0.5rem;
@@ -46,7 +73,6 @@
         .policy-card, .insurance-card, .purchased-card { cursor: pointer; transition: background-color 0.15s ease; }
         .policy-card:hover, .insurance-card:hover, .purchased-card:hover { background-color: #f9fafb; }
         .status-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 500; }
-        /* 导航高亮 */
         .nav-link {
             transition: background-color 0.25s ease, color 0.25s ease;
             cursor: pointer;
@@ -64,7 +90,6 @@
             background: rgba(255,255,255,0.08);
             color: #fff;
         }
-        /* 悬浮摘要胶囊 */
         .floating-summary {
             position: fixed;
             top: 16px;
@@ -172,20 +197,20 @@
                 </div>
             </header>
 
-            <!-- 悬浮摘要胶囊 -->
+            <!-- 悬浮摘要胶囊（移动端底部悬浮简化，桌面端顶部居中） -->
             <div class="floating-summary" id="floatingSummary">
                 <div class="floating-summary-item"><span class="fs-icon">📅</span><span class="fs-value" id="fsDate">--</span></div>
                 <div class="fs-divider"></div>
                 <div class="floating-summary-item"><span class="fs-icon" id="fsWeatherIcon">⛅</span><span class="fs-value" id="fsWeatherDesc">--</span></div>
                 <div class="fs-divider"></div>
-                <div class="floating-summary-item"><span class="fs-icon">🌧️</span><span class="fs-value" id="fsRain">--</span><span class="fs-label">降水</span></div>
-                <div class="fs-divider"></div>
-                <div class="floating-summary-item"><span class="fs-icon">💨</span><span class="fs-value" id="fsWind">--</span><span class="fs-label">风速</span></div>
-                <div class="fs-divider"></div>
-                <div class="floating-summary-item"><span class="fs-icon">💧</span><span class="fs-value" id="fsMoist">--</span><span class="fs-label">湿度</span></div>
-                <div class="fs-divider"></div>
-                <div class="floating-summary-item"><span class="fs-icon">🌡️</span><span class="fs-value" id="fsTemp">--</span><span class="fs-label">地温</span></div>
-                <div class="fs-divider"></div>
+                <div class="floating-summary-item mobile-hide"><span class="fs-icon">🌧️</span><span class="fs-value" id="fsRain">--</span><span class="fs-label">降水</span></div>
+                <div class="fs-divider mobile-hide"></div>
+                <div class="floating-summary-item mobile-hide"><span class="fs-icon">💨</span><span class="fs-value" id="fsWind">--</span><span class="fs-label">风速</span></div>
+                <div class="fs-divider mobile-hide"></div>
+                <div class="floating-summary-item mobile-hide"><span class="fs-icon">💧</span><span class="fs-value" id="fsMoist">--</span><span class="fs-label">湿度</span></div>
+                <div class="fs-divider mobile-hide"></div>
+                <div class="floating-summary-item mobile-hide"><span class="fs-icon">🌡️</span><span class="fs-value" id="fsTemp">--</span><span class="fs-label">地温</span></div>
+                <div class="fs-divider mobile-hide"></div>
                 <div class="floating-summary-item"><span class="fs-icon">⚠️</span><span class="fs-value" id="fsRisk">--</span></div>
             </div>
 
@@ -282,6 +307,17 @@
             </main>
         </div>
     </div>
+
+    <!-- 移动端底部导航 -->
+    <nav class="mobile-bottom-nav fixed bottom-0 inset-x-0 bg-white border-t border-gray-200 z-50 md:hidden">
+        <div class="flex justify-around">
+            <a href="#dashboard" class="flex flex-col items-center py-2 px-3 text-xs text-gray-500"><span class="text-lg">📊</span>概览</a>
+            <a href="#forecast" class="flex flex-col items-center py-2 px-3 text-xs text-gray-500"><span class="text-lg">📈</span>预测</a>
+            <a href="#hourly24" class="flex flex-col items-center py-2 px-3 text-xs text-gray-500"><span class="text-lg">🕒</span>监测</a>
+            <a href="#myinsurance" class="flex flex-col items-center py-2 px-3 text-xs text-gray-500"><span class="text-lg">📑</span>保单</a>
+            <a href="#advice" class="flex flex-col items-center py-2 px-3 text-xs text-gray-500"><span class="text-lg">💡</span>建议</a>
+        </div>
+    </nav>
 
     <div class="modal-overlay" id="claimModal">
         <div class="modal-content">
