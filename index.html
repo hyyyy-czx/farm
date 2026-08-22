@@ -75,6 +75,34 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
+        /* 顶部摘要栏 */
+        .summary-bar {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .summary-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            border: 1px solid #f3f4f6;
+            white-space: nowrap;
+        }
+        .summary-item .summary-icon {
+            font-size: 1.2rem;
+        }
+        .summary-item .summary-value {
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        .summary-item .summary-label {
+            font-size: 0.7rem;
+            color: #6b7280;
+        }
         /* 24小时图表卡片网格 - 多行布局 */
         .hourly-grid {
             display: grid;
@@ -239,15 +267,56 @@
 
         <!-- 右侧内容区 -->
         <div class="flex-1 ml-64 main-content">
-            <!-- 顶部工具栏 -->
-            <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-4 md:px-6 py-4">
-                <div class="flex items-center justify-between gap-4">
-                    <div class="relative flex-1 max-w-md">
-                        <input type="text" placeholder="搜索农情数据、保单号..."
-                               class="w-full bg-gray-50 border border-gray-200 rounded-lg text-sm px-4 py-2 pl-10 focus:outline-none focus:ring-2 focus:ring-[#6366f1]/20 focus:border-[#6366f1] transition-all">
-                        <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
+            <!-- 顶部工具栏（包含日期摘要 + 铃铛 + 用户） -->
+            <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-4 md:px-6 py-3">
+                <div class="flex items-center justify-between gap-4 flex-wrap">
+                    <!-- 左侧：日期 + 关键数据摘要 -->
+                    <div class="summary-bar flex-1 min-w-0">
+                        <div class="summary-item">
+                            <span class="summary-icon">📅</span>
+                            <div>
+                                <div class="summary-value" id="headerDate">--</div>
+                                <div class="summary-label">今日</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-icon" id="headerWeatherIcon">⛅</span>
+                            <div>
+                                <div class="summary-value" id="headerRain">--</div>
+                                <div class="summary-label">降雨</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-icon">💧</span>
+                            <div>
+                                <div class="summary-value" id="headerMoist">--</div>
+                                <div class="summary-label">土壤湿度</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-icon">🌡️</span>
+                            <div>
+                                <div class="summary-value" id="headerTemp">--</div>
+                                <div class="summary-label">土壤温度</div>
+                            </div>
+                        </div>
+                        <div class="summary-item">
+                            <span class="summary-icon">💨</span>
+                            <div>
+                                <div class="summary-value" id="headerWind">--</div>
+                                <div class="summary-label">风速</div>
+                            </div>
+                        </div>
+                        <div class="summary-item" id="headerRiskBadge">
+                            <span class="summary-icon">⚠️</span>
+                            <div>
+                                <div class="summary-value" id="headerRisk">--</div>
+                                <div class="summary-label">风险</div>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex items-center gap-3">
+                    <!-- 右侧：铃铛 + 用户 -->
+                    <div class="flex items-center gap-3 shrink-0">
                         <button 
                             onclick="openClaimModal()" 
                             title="查看理赔详情（模拟理赔）"
@@ -719,6 +788,7 @@
                 fetchHistory(),
                 fetchPast24h()
             ]);
+            updateHeaderSummary();
             updateKPI();
             updateCharts();
             updatePast24hCharts();
@@ -727,6 +797,53 @@
             updateInsurance();
             renderMyInsurance();
             renderPolicy();
+        }
+
+        // 更新顶部摘要栏
+        function updateHeaderSummary() {
+            // 日期
+            const now = new Date();
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const dateStr = `${now.getFullYear()}年${now.getMonth()+1}月${now.getDate()}日 周${weekdays[now.getDay()]}`;
+            document.getElementById('headerDate').textContent = dateStr;
+
+            // 天气数据
+            const c = weatherData.current;
+            const rainVal = c.rain.toFixed(1);
+            const moistVal = c.soilMoist + '%';
+            const tempVal = c.soilTemp.toFixed(1) + '°C';
+            const windVal = c.wind.toFixed(1) + 'm/s';
+
+            document.getElementById('headerRain').textContent = rainVal + 'mm';
+            document.getElementById('headerMoist').textContent = moistVal;
+            document.getElementById('headerTemp').textContent = tempVal;
+            document.getElementById('headerWind').textContent = windVal;
+
+            // 根据降雨确定天气图标
+            const icon = document.getElementById('headerWeatherIcon');
+            if (c.rain > 50) icon.textContent = '🌧️';
+            else if (c.rain > 20) icon.textContent = '🌦️';
+            else if (c.rain > 5) icon.textContent = '⛅';
+            else icon.textContent = '☀️';
+        }
+
+        // 更新顶部风险徽章
+        function updateHeaderRiskBadge(riskScore, riskLevel) {
+            const badge = document.getElementById('headerRisk');
+            const badgeContainer = document.getElementById('headerRiskBadge');
+            if (riskLevel === '低风险') {
+                badge.textContent = '低风险';
+                badgeContainer.style.background = '#dcfce7';
+            } else if (riskLevel === '中等风险') {
+                badge.textContent = '中等风险';
+                badgeContainer.style.background = '#fef3c7';
+            } else if (riskLevel === '高风险') {
+                badge.textContent = '高风险';
+                badgeContainer.style.background = '#fee2e2';
+            } else {
+                badge.textContent = '极高风险';
+                badgeContainer.style.background = '#fecaca';
+            }
         }
 
         // 获取当前天气
@@ -925,7 +1042,6 @@
             const d = weatherData.hourly24;
             const c = weatherData.current;
             
-            // 计算统计值
             const rainTotal = d.rain.reduce((a,b)=>a+b,0);
             const rainMax = Math.max(...d.rain, 0);
             const windAvg = d.wind.reduce((a,b)=>a+b,0) / d.wind.length;
@@ -936,7 +1052,6 @@
             const airTempMax = Math.max(...d.airTemp, 0);
             const airTempMin = Math.min(...d.airTemp, 100);
 
-            // 更新tooltip数据
             document.getElementById('tooltipRainTotal').textContent = rainTotal.toFixed(1) + 'mm';
             document.getElementById('tooltipRainMax').textContent = rainMax.toFixed(1) + 'mm';
             document.getElementById('tooltipWindAvg').textContent = windAvg.toFixed(1) + 'm/s';
@@ -947,50 +1062,40 @@
             document.getElementById('tooltipAirTempMax').textContent = airTempMax.toFixed(1) + '°C';
             document.getElementById('tooltipAirTempMin').textContent = airTempMin.toFixed(1) + '°C';
 
-            // 风险评估计算
             let riskScore = 0;
             let riskFlags = [];
             
-            // 降雨风险
             let rainRisk = '低';
             if (rainTotal > 100) { riskScore += 30; rainRisk = '高'; riskFlags.push('暴雨风险高'); }
             else if (rainTotal > 50) { riskScore += 15; rainRisk = '中'; riskFlags.push('降雨偏多'); }
-            else { rainRisk = '低'; }
             document.getElementById('tooltipRainRisk').textContent = rainRisk;
             document.getElementById('riskRain').textContent = rainRisk;
             
-            // 大风风险
             let windRisk = '低';
             if (windMax > 15) { riskScore += 20; windRisk = '高'; riskFlags.push('大风风险高'); }
             else if (windMax > 8) { riskScore += 10; windRisk = '中'; riskFlags.push('风力偏大'); }
-            else { windRisk = '低'; }
             document.getElementById('tooltipWindRisk').textContent = windRisk;
             document.getElementById('riskWind').textContent = windRisk;
             
-            // 土壤湿度风险
             let moistRisk = '低';
             const crop = CROPS[currentCrop];
             if (moistAvg > crop.optimalMoisture.max + 10) { riskScore += 25; moistRisk = '高'; riskFlags.push('土壤过湿'); }
             else if (moistAvg > crop.optimalMoisture.max) { riskScore += 12; moistRisk = '中'; riskFlags.push('湿度偏高'); }
             else if (moistAvg < crop.optimalMoisture.min - 10) { riskScore += 25; moistRisk = '高'; riskFlags.push('土壤干旱'); }
             else if (moistAvg < crop.optimalMoisture.min) { riskScore += 12; moistRisk = '中'; riskFlags.push('湿度偏低'); }
-            else { moistRisk = '低'; }
             document.getElementById('tooltipMoistState').textContent = moistRisk === '低' ? '适宜' : (moistRisk === '高' ? '需调整' : '需关注');
             document.getElementById('tooltipMoistRisk').textContent = moistRisk;
             document.getElementById('riskMoist').textContent = moistRisk;
             
-            // 温度风险
             let tempRisk = '低';
             if (airTempMax > 38 || soilTempAvg > 35) { riskScore += 25; tempRisk = '高'; riskFlags.push('高温风险'); }
             else if (airTempMax > 35 || soilTempAvg > 30) { riskScore += 12; tempRisk = '中'; riskFlags.push('温度偏高'); }
             else if (airTempMin < 5) { riskScore += 20; tempRisk = '高'; riskFlags.push('低温风险'); }
-            else { tempRisk = '低'; }
             document.getElementById('tooltipSoilTempState').textContent = tempRisk === '低' ? '适宜' : (tempRisk === '高' ? '需调整' : '需关注');
             document.getElementById('tooltipSoilTempRisk').textContent = tempRisk;
             document.getElementById('tooltipAirTempRisk').textContent = tempRisk;
             document.getElementById('riskTemp').textContent = tempRisk;
 
-            // 更新风险环
             riskScore = Math.min(100, riskScore);
             const riskRing = document.getElementById('riskRing');
             const deg = (riskScore / 100) * 360;
@@ -998,28 +1103,34 @@
             riskRing.style.background = `conic-gradient(${color} 0deg, ${color} ${deg}deg, #e5e7eb ${deg}deg)`;
             document.getElementById('riskScoreNum').textContent = riskScore;
             
-            // 风险等级标签
             const badge = document.getElementById('riskLevelBadge');
             const summary = document.getElementById('riskSummary');
+            let riskLevelText = '';
             if (riskScore < 25) {
                 badge.textContent = '低风险';
                 badge.className = 'risk-badge risk-low';
                 summary.textContent = '当前天气条件良好，适宜农事活动';
+                riskLevelText = '低风险';
             } else if (riskScore < 50) {
                 badge.textContent = '中等风险';
                 badge.className = 'risk-badge risk-medium';
                 summary.textContent = '存在' + riskFlags.join('、') + '，请注意防范';
+                riskLevelText = '中等风险';
             } else if (riskScore < 75) {
                 badge.textContent = '高风险';
                 badge.className = 'risk-badge risk-high';
                 summary.textContent = riskFlags.join('、') + '，建议采取应对措施';
+                riskLevelText = '高风险';
             } else {
                 badge.textContent = '极高风险';
                 badge.className = 'risk-badge risk-extreme';
                 summary.textContent = riskFlags.join('、') + '，建议立即采取防护措施';
+                riskLevelText = '极高风险';
             }
             
-            // 保险建议
+            // 更新顶部风险徽章
+            updateHeaderRiskBadge(riskScore, riskLevelText);
+            
             let insuranceAdvice = '基础保险即可';
             if (riskScore >= 50) insuranceAdvice = '建议投保暴雨指数保险';
             if (tempRisk === '高') insuranceAdvice = '建议增加高温热害保险';
@@ -1467,6 +1578,7 @@
                 fetchHistory(),
                 fetchPast24h()
             ]);
+            updateHeaderSummary();
             updateKPI();
             updateCharts();
             updatePast24hCharts();
