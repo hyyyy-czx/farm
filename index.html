@@ -75,78 +75,119 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
-        /* 24小时图表卡片网格 - 尺寸增大 */
+        /* 24小时图表卡片网格 - 多行布局 */
         .hourly-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
-            gap: 1rem;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+        @media (min-width: 640px) {
+            .hourly-grid { grid-template-columns: repeat(2, 1fr); }
+        }
+        @media (min-width: 1024px) {
+            .hourly-grid { grid-template-columns: repeat(3, 1fr); }
         }
         .hourly-card {
             background: #fff;
             border-radius: 0.75rem;
-            border: 1px solid #f3f4f6;
-            padding: 1rem;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            height: 240px;                /* 增大高度 */
+            border: 1px solid #e5e7eb;
+            padding: 1.25rem;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            height: 260px;
             display: flex;
             flex-direction: column;
             overflow: hidden;
+            transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+            cursor: default;
+            position: relative;
+        }
+        .hourly-card:hover {
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+            border-color: #c7d2fe;
         }
         .hourly-card h4 {
             flex-shrink: 0;
-            margin-bottom: 0.75rem;
-            font-size: 0.95rem;           /* 增大标题字号 */
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
             color: #374151;
             font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .hourly-card canvas {
+        .hourly-card .chart-wrapper {
             flex: 1;
             min-height: 0;
+            position: relative;
+            width: 100%;
+        }
+        .hourly-card canvas {
             width: 100% !important;
             height: 100% !important;
         }
-        /* 风险概览卡片样式 */
-        .risk-card {
-            background: #fff;
+        /* 悬停提示面板 */
+        .hourly-tooltip {
+            position: absolute;
+            inset: 0;
+            background: rgba(255,255,255,0.97);
             border-radius: 0.75rem;
-            border: 1px solid #f3f4f6;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
             padding: 1.25rem;
-            margin-bottom: 1.5rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.25s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            z-index: 10;
         }
-        .risk-row {
+        .hourly-card:hover .hourly-tooltip {
+            opacity: 1;
+        }
+        .tooltip-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            border-bottom: 1px dashed #e5e7eb;
+            font-size: 0.85rem;
+        }
+        .tooltip-row:last-child { border-bottom: none; }
+        .tooltip-label { color: #6b7280; }
+        .tooltip-value { font-weight: 600; color: #111827; }
+        /* 风险等级卡片 */
+        .risk-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 0.25rem 0.75rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            font-size: 0.8rem;
+        }
+        .risk-low { background: #dcfce7; color: #166534; }
+        .risk-medium { background: #fef3c7; color: #92400e; }
+        .risk-high { background: #fee2e2; color: #991b1b; }
+        .risk-extreme { background: #fecaca; color: #7f1d1d; }
+        .risk-ring {
+            width: 90px;
+            height: 90px;
+            border-radius: 50%;
             display: flex;
             align-items: center;
-            justify-content: space-between;
-            padding: 0.75rem 0;
-            border-bottom: 1px solid #f3f4f6;
+            justify-content: center;
+            margin: 0 auto;
+            position: relative;
         }
-        .risk-row:last-child {
-            border-bottom: none;
-        }
-        .risk-label {
-            font-size: 0.9rem;
-            font-weight: 500;
-            color: #374151;
-        }
-        .risk-value {
-            font-size: 0.9rem;
-            font-weight: 600;
-        }
-        .risk-level-high { color: #ef4444; }
-        .risk-level-medium { color: #f59e0b; }
-        .risk-level-low { color: #10b981; }
-        .risk-progress {
-            width: 120px;
-            height: 6px;
-            background: #f3f4f6;
-            border-radius: 3px;
-            overflow: hidden;
-            margin-left: 1rem;
-        }
-        .risk-progress-fill {
-            height: 100%;
-            border-radius: 3px;
+        .risk-ring-inner {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            background: #fff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 1.3rem;
+            flex-direction: column;
         }
     </style>
 </head>
@@ -170,9 +211,6 @@
                 </a>
                 <a href="#history" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>📉</span> 历史趋势
-                </a>
-                <a href="#risk" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
-                    <span>⚠️</span> 风险概览
                 </a>
                 <a href="#hourly24" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>🕒</span> 24小时监测
@@ -276,14 +314,6 @@
                     </div>
                 </section>
 
-                <!-- 风险概览卡片（新增） -->
-                <section id="risk" class="risk-card">
-                    <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">⚠️ 综合风险概览</h3>
-                    <div id="riskContent" class="space-y-0">
-                        <!-- 动态渲染风险行 -->
-                    </div>
-                </section>
-
                 <!-- 未来预测图表 -->
                 <section id="forecast" class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
@@ -308,29 +338,101 @@
                     </div>
                 </section>
 
-                <!-- 过去24小时多指标监测 -->
+                <!-- 过去24小时多指标监测 + 风险评估（多行卡片布局） -->
                 <section id="hourly24" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
-                    <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">🕒 过去24小时实时监测</h3>
+                    <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">🕒 过去24小时实时监测与风险评估</h3>
                     <div class="hourly-grid">
+                        <!-- 降水卡片 -->
                         <div class="hourly-card">
                             <h4>🌧️ 降水 (mm)</h4>
-                            <canvas id="hourlyRainChart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="hourlyRainChart"></canvas>
+                            </div>
+                            <div class="hourly-tooltip">
+                                <p class="text-sm font-semibold mb-3">降水数据判定</p>
+                                <div class="tooltip-row"><span class="tooltip-label">24h累计降水</span><span class="tooltip-value" id="tooltipRainTotal">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">最大小时降水</span><span class="tooltip-value" id="tooltipRainMax">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">暴雨阈值</span><span class="tooltip-value">70mm/日</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">风险评估</span><span class="tooltip-value" id="tooltipRainRisk">--</span></div>
+                            </div>
                         </div>
+                        <!-- 风速卡片 -->
                         <div class="hourly-card">
                             <h4>💨 风速 (m/s)</h4>
-                            <canvas id="hourlyWindChart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="hourlyWindChart"></canvas>
+                            </div>
+                            <div class="hourly-tooltip">
+                                <p class="text-sm font-semibold mb-3">风速数据判定</p>
+                                <div class="tooltip-row"><span class="tooltip-label">平均风速</span><span class="tooltip-value" id="tooltipWindAvg">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">最大风速</span><span class="tooltip-value" id="tooltipWindMax">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">大风阈值</span><span class="tooltip-value">≥8m/s</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">风险评估</span><span class="tooltip-value" id="tooltipWindRisk">--</span></div>
+                            </div>
                         </div>
+                        <!-- 土壤湿度卡片 -->
                         <div class="hourly-card">
                             <h4>💧 土壤湿度 (%)</h4>
-                            <canvas id="hourlyMoistChart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="hourlyMoistChart"></canvas>
+                            </div>
+                            <div class="hourly-tooltip">
+                                <p class="text-sm font-semibold mb-3">土壤湿度数据判定</p>
+                                <div class="tooltip-row"><span class="tooltip-label">平均湿度</span><span class="tooltip-value" id="tooltipMoistAvg">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">适宜范围</span><span class="tooltip-value">50%-75%</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">当前状态</span><span class="tooltip-value" id="tooltipMoistState">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">风险评估</span><span class="tooltip-value" id="tooltipMoistRisk">--</span></div>
+                            </div>
                         </div>
+                        <!-- 土壤温度卡片 -->
                         <div class="hourly-card">
                             <h4>🌡️ 土壤温度 (°C)</h4>
-                            <canvas id="hourlySoilTempChart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="hourlySoilTempChart"></canvas>
+                            </div>
+                            <div class="hourly-tooltip">
+                                <p class="text-sm font-semibold mb-3">土壤温度数据判定</p>
+                                <div class="tooltip-row"><span class="tooltip-label">平均地温</span><span class="tooltip-value" id="tooltipSoilTempAvg">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">适宜范围</span><span class="tooltip-value">20°C-35°C</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">当前状态</span><span class="tooltip-value" id="tooltipSoilTempState">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">风险评估</span><span class="tooltip-value" id="tooltipSoilTempRisk">--</span></div>
+                            </div>
                         </div>
+                        <!-- 气温卡片 -->
                         <div class="hourly-card">
                             <h4>🌡️ 气温 (°C)</h4>
-                            <canvas id="hourlyAirTempChart"></canvas>
+                            <div class="chart-wrapper">
+                                <canvas id="hourlyAirTempChart"></canvas>
+                            </div>
+                            <div class="hourly-tooltip">
+                                <p class="text-sm font-semibold mb-3">气温数据判定</p>
+                                <div class="tooltip-row"><span class="tooltip-label">平均气温</span><span class="tooltip-value" id="tooltipAirTempAvg">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">最高气温</span><span class="tooltip-value" id="tooltipAirTempMax">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">最低气温</span><span class="tooltip-value" id="tooltipAirTempMin">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">风险评估</span><span class="tooltip-value" id="tooltipAirTempRisk">--</span></div>
+                            </div>
+                        </div>
+                        <!-- 风险评估卡片（新增） -->
+                        <div class="hourly-card" style="border-color: #c7d2fe;">
+                            <h4>⚠️ 综合风险评估</h4>
+                            <div class="flex-1 flex flex-col items-center justify-center gap-3 py-2">
+                                <div class="risk-ring" id="riskRing" style="background: conic-gradient(#10b981 0deg, #10b981 72deg, #e5e7eb 72deg);">
+                                    <div class="risk-ring-inner">
+                                        <span id="riskScoreNum">20</span>
+                                        <span class="text-xs text-gray-500">/ 100</span>
+                                    </div>
+                                </div>
+                                <span class="risk-badge risk-low" id="riskLevelBadge">低风险</span>
+                                <p class="text-xs text-gray-500 text-center" id="riskSummary">当前天气条件良好，适宜农事活动</p>
+                            </div>
+                            <div class="hourly-tooltip" style="pointer-events:auto;">
+                                <p class="text-sm font-semibold mb-3">风险评估详情</p>
+                                <div class="tooltip-row"><span class="tooltip-label">降雨风险</span><span class="tooltip-value" id="riskRain">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">大风风险</span><span class="tooltip-value" id="riskWind">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">土壤过湿风险</span><span class="tooltip-value" id="riskMoist">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">高温风险</span><span class="tooltip-value" id="riskTemp">--</span></div>
+                                <div class="tooltip-row"><span class="tooltip-label">保险建议</span><span class="tooltip-value" id="riskInsurance">--</span></div>
+                            </div>
                         </div>
                     </div>
                 </section>
@@ -620,11 +722,11 @@
             updateKPI();
             updateCharts();
             updatePast24hCharts();
+            updateRiskAssessment();
             updateAdvice();
             updateInsurance();
             renderMyInsurance();
             renderPolicy();
-            renderRisk();
         }
 
         // 获取当前天气
@@ -706,45 +808,6 @@
             document.getElementById('tempTrend').textContent = c.soilTemp > 30 ? '🔥 偏高' : '适宜';
         }
 
-        // 渲染风险概览
-        function renderRisk() {
-            const c = weatherData.current;
-            const rainRisk = c.rain > THRESHOLD_RAIN ? '高风险' : (c.rain > 30 ? '中风险' : '低风险');
-            const soilRisk = c.soilMoist > 80 || c.soilMoist < 30 ? '高风险' : (c.soilMoist > 70 || c.soilMoist < 40 ? '中风险' : '低风险');
-            const tempRisk = c.soilTemp > 35 || c.soilTemp < 10 ? '高风险' : (c.soilTemp > 30 || c.soilTemp < 15 ? '中风险' : '低风险');
-            const windRisk = c.wind > 10 ? '高风险' : (c.wind > 6 ? '中风险' : '低风险');
-            const overallRisk = (rainRisk === '高风险' || soilRisk === '高风险' || tempRisk === '高风险' || windRisk === '高风险') ? '高风险' :
-                (rainRisk === '中风险' || soilRisk === '中风险' || tempRisk === '中风险' || windRisk === '中风险') ? '中风险' : '低风险';
-
-            const riskHTML = `
-                <div class="risk-row">
-                    <span class="risk-label">🌧️ 降雨风险</span>
-                    <span class="risk-value risk-level-${rainRisk === '高风险' ? 'high' : rainRisk === '中风险' ? 'medium' : 'low'}">${rainRisk}</span>
-                    <div class="risk-progress"><div class="risk-progress-fill ${rainRisk === '高风险' ? 'bg-red-500' : rainRisk === '中风险' ? 'bg-yellow-500' : 'bg-green-500'}" style="width:${c.rain > 100 ? 100 : c.rain}%;"></div></div>
-                </div>
-                <div class="risk-row">
-                    <span class="risk-label">💧 土壤墒情风险</span>
-                    <span class="risk-value risk-level-${soilRisk === '高风险' ? 'high' : soilRisk === '中风险' ? 'medium' : 'low'}">${soilRisk}</span>
-                    <div class="risk-progress"><div class="risk-progress-fill ${soilRisk === '高风险' ? 'bg-red-500' : soilRisk === '中风险' ? 'bg-yellow-500' : 'bg-green-500'}" style="width:${c.soilMoist}%;"></div></div>
-                </div>
-                <div class="risk-row">
-                    <span class="risk-label">🌡️ 温度风险</span>
-                    <span class="risk-value risk-level-${tempRisk === '高风险' ? 'high' : tempRisk === '中风险' ? 'medium' : 'low'}">${tempRisk}</span>
-                    <div class="risk-progress"><div class="risk-progress-fill ${tempRisk === '高风险' ? 'bg-red-500' : tempRisk === '中风险' ? 'bg-yellow-500' : 'bg-green-500'}" style="width:${Math.min(c.soilTemp,45)}%;"></div></div>
-                </div>
-                <div class="risk-row">
-                    <span class="risk-label">💨 风速风险</span>
-                    <span class="risk-value risk-level-${windRisk === '高风险' ? 'high' : windRisk === '中风险' ? 'medium' : 'low'}">${windRisk}</span>
-                    <div class="risk-progress"><div class="risk-progress-fill ${windRisk === '高风险' ? 'bg-red-500' : windRisk === '中风险' ? 'bg-yellow-500' : 'bg-green-500'}" style="width:${Math.min(c.wind,15)*6.67}%;"></div></div>
-                </div>
-                <div class="risk-row" style="border-bottom: none; padding-bottom: 0;">
-                    <span class="risk-label">📊 综合风险等级</span>
-                    <span class="risk-value risk-level-${overallRisk === '高风险' ? 'high' : overallRisk === '中风险' ? 'medium' : 'low'}">${overallRisk}</span>
-                </div>
-            `;
-            document.getElementById('riskContent').innerHTML = riskHTML;
-        }
-
         // 绘制图表（未来预测 + 历史7天）
         function updateCharts() {
             Object.values(charts).forEach(chart => chart?.destroy());
@@ -808,9 +871,8 @@
             });
         }
 
-        // 绘制过去24小时多指标图表（已修正容器高度）
+        // 绘制过去24小时多指标图表
         function updatePast24hCharts() {
-            // 销毁旧的24小时图表（如果存在）
             if (charts.hourlyRain) charts.hourlyRain.destroy();
             if (charts.hourlyWind) charts.hourlyWind.destroy();
             if (charts.hourlyMoist) charts.hourlyMoist.destroy();
@@ -835,8 +897,7 @@
                             backgroundColor: color + '20',
                             fill: type === 'line',
                             tension: 0.3,
-                            pointRadius: 2,           // 增大数据点，方便悬停
-                            pointHoverRadius: 6,
+                            pointRadius: 0,
                             borderWidth: 2
                         }]
                     },
@@ -845,7 +906,7 @@
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            x: { display: true, ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+                            x: { display: true, ticks: { maxTicksLimit: 4, font: { size: 10 } } },
                             y: { display: true, beginAtZero: true, ticks: { font: { size: 10 } } }
                         }
                     }
@@ -857,6 +918,113 @@
             charts.hourlyMoist = makeChart('hourlyMoistChart', '土壤湿度 (%)', weatherData.hourly24.soilMoist, '#3b82f6');
             charts.hourlySoilTemp = makeChart('hourlySoilTempChart', '土壤温度 (°C)', weatherData.hourly24.soilTemp, '#ef4444');
             charts.hourlyAirTemp = makeChart('hourlyAirTempChart', '气温 (°C)', weatherData.hourly24.airTemp, '#10b981');
+        }
+
+        // 更新风险评估
+        function updateRiskAssessment() {
+            const d = weatherData.hourly24;
+            const c = weatherData.current;
+            
+            // 计算统计值
+            const rainTotal = d.rain.reduce((a,b)=>a+b,0);
+            const rainMax = Math.max(...d.rain, 0);
+            const windAvg = d.wind.reduce((a,b)=>a+b,0) / d.wind.length;
+            const windMax = Math.max(...d.wind, 0);
+            const moistAvg = d.soilMoist.reduce((a,b)=>a+b,0) / d.soilMoist.length;
+            const soilTempAvg = d.soilTemp.reduce((a,b)=>a+b,0) / d.soilTemp.length;
+            const airTempAvg = d.airTemp.reduce((a,b)=>a+b,0) / d.airTemp.length;
+            const airTempMax = Math.max(...d.airTemp, 0);
+            const airTempMin = Math.min(...d.airTemp, 100);
+
+            // 更新tooltip数据
+            document.getElementById('tooltipRainTotal').textContent = rainTotal.toFixed(1) + 'mm';
+            document.getElementById('tooltipRainMax').textContent = rainMax.toFixed(1) + 'mm';
+            document.getElementById('tooltipWindAvg').textContent = windAvg.toFixed(1) + 'm/s';
+            document.getElementById('tooltipWindMax').textContent = windMax.toFixed(1) + 'm/s';
+            document.getElementById('tooltipMoistAvg').textContent = moistAvg.toFixed(1) + '%';
+            document.getElementById('tooltipSoilTempAvg').textContent = soilTempAvg.toFixed(1) + '°C';
+            document.getElementById('tooltipAirTempAvg').textContent = airTempAvg.toFixed(1) + '°C';
+            document.getElementById('tooltipAirTempMax').textContent = airTempMax.toFixed(1) + '°C';
+            document.getElementById('tooltipAirTempMin').textContent = airTempMin.toFixed(1) + '°C';
+
+            // 风险评估计算
+            let riskScore = 0;
+            let riskFlags = [];
+            
+            // 降雨风险
+            let rainRisk = '低';
+            if (rainTotal > 100) { riskScore += 30; rainRisk = '高'; riskFlags.push('暴雨风险高'); }
+            else if (rainTotal > 50) { riskScore += 15; rainRisk = '中'; riskFlags.push('降雨偏多'); }
+            else { rainRisk = '低'; }
+            document.getElementById('tooltipRainRisk').textContent = rainRisk;
+            document.getElementById('riskRain').textContent = rainRisk;
+            
+            // 大风风险
+            let windRisk = '低';
+            if (windMax > 15) { riskScore += 20; windRisk = '高'; riskFlags.push('大风风险高'); }
+            else if (windMax > 8) { riskScore += 10; windRisk = '中'; riskFlags.push('风力偏大'); }
+            else { windRisk = '低'; }
+            document.getElementById('tooltipWindRisk').textContent = windRisk;
+            document.getElementById('riskWind').textContent = windRisk;
+            
+            // 土壤湿度风险
+            let moistRisk = '低';
+            const crop = CROPS[currentCrop];
+            if (moistAvg > crop.optimalMoisture.max + 10) { riskScore += 25; moistRisk = '高'; riskFlags.push('土壤过湿'); }
+            else if (moistAvg > crop.optimalMoisture.max) { riskScore += 12; moistRisk = '中'; riskFlags.push('湿度偏高'); }
+            else if (moistAvg < crop.optimalMoisture.min - 10) { riskScore += 25; moistRisk = '高'; riskFlags.push('土壤干旱'); }
+            else if (moistAvg < crop.optimalMoisture.min) { riskScore += 12; moistRisk = '中'; riskFlags.push('湿度偏低'); }
+            else { moistRisk = '低'; }
+            document.getElementById('tooltipMoistState').textContent = moistRisk === '低' ? '适宜' : (moistRisk === '高' ? '需调整' : '需关注');
+            document.getElementById('tooltipMoistRisk').textContent = moistRisk;
+            document.getElementById('riskMoist').textContent = moistRisk;
+            
+            // 温度风险
+            let tempRisk = '低';
+            if (airTempMax > 38 || soilTempAvg > 35) { riskScore += 25; tempRisk = '高'; riskFlags.push('高温风险'); }
+            else if (airTempMax > 35 || soilTempAvg > 30) { riskScore += 12; tempRisk = '中'; riskFlags.push('温度偏高'); }
+            else if (airTempMin < 5) { riskScore += 20; tempRisk = '高'; riskFlags.push('低温风险'); }
+            else { tempRisk = '低'; }
+            document.getElementById('tooltipSoilTempState').textContent = tempRisk === '低' ? '适宜' : (tempRisk === '高' ? '需调整' : '需关注');
+            document.getElementById('tooltipSoilTempRisk').textContent = tempRisk;
+            document.getElementById('tooltipAirTempRisk').textContent = tempRisk;
+            document.getElementById('riskTemp').textContent = tempRisk;
+
+            // 更新风险环
+            riskScore = Math.min(100, riskScore);
+            const riskRing = document.getElementById('riskRing');
+            const deg = (riskScore / 100) * 360;
+            const color = riskScore < 25 ? '#10b981' : riskScore < 50 ? '#f59e0b' : riskScore < 75 ? '#f97316' : '#ef4444';
+            riskRing.style.background = `conic-gradient(${color} 0deg, ${color} ${deg}deg, #e5e7eb ${deg}deg)`;
+            document.getElementById('riskScoreNum').textContent = riskScore;
+            
+            // 风险等级标签
+            const badge = document.getElementById('riskLevelBadge');
+            const summary = document.getElementById('riskSummary');
+            if (riskScore < 25) {
+                badge.textContent = '低风险';
+                badge.className = 'risk-badge risk-low';
+                summary.textContent = '当前天气条件良好，适宜农事活动';
+            } else if (riskScore < 50) {
+                badge.textContent = '中等风险';
+                badge.className = 'risk-badge risk-medium';
+                summary.textContent = '存在' + riskFlags.join('、') + '，请注意防范';
+            } else if (riskScore < 75) {
+                badge.textContent = '高风险';
+                badge.className = 'risk-badge risk-high';
+                summary.textContent = riskFlags.join('、') + '，建议采取应对措施';
+            } else {
+                badge.textContent = '极高风险';
+                badge.className = 'risk-badge risk-extreme';
+                summary.textContent = riskFlags.join('、') + '，建议立即采取防护措施';
+            }
+            
+            // 保险建议
+            let insuranceAdvice = '基础保险即可';
+            if (riskScore >= 50) insuranceAdvice = '建议投保暴雨指数保险';
+            if (tempRisk === '高') insuranceAdvice = '建议增加高温热害保险';
+            if (windRisk === '高') insuranceAdvice = '建议投保设施农业保险';
+            document.getElementById('riskInsurance').textContent = insuranceAdvice;
         }
 
         // 更新种植建议
@@ -1159,8 +1327,8 @@
             currentCrop = document.getElementById('cropSelect').value;
             updateAdvice();
             updateInsurance();
+            updateRiskAssessment();
             renderPolicy();
-            renderRisk();  // 作物变化可能影响风险判断（此处可扩展）
         }
 
         // 打开理赔模态框
@@ -1302,10 +1470,10 @@
             updateKPI();
             updateCharts();
             updatePast24hCharts();
+            updateRiskAssessment();
             updateAdvice();
             updateInsurance();
             renderMyInsurance();
-            renderRisk();
             if (claimModalOpen) populateClaimModal();
         }, 30 * 60 * 1000);
     </script>
