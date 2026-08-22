@@ -46,7 +46,7 @@
         .policy-card, .insurance-card, .purchased-card { cursor: pointer; transition: background-color 0.15s ease; }
         .policy-card:hover, .insurance-card:hover, .purchased-card:hover { background-color: #f9fafb; }
         .status-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 500; }
-        /* 导航高亮 - 悬停和滚动均可触发 */
+        /* 导航高亮 */
         .nav-link {
             transition: background-color 0.25s ease, color 0.25s ease;
             cursor: pointer;
@@ -135,30 +135,30 @@
 <body class="bg-[#f9fafb] text-[#111827] font-sans antialiased">
 
     <div class="flex min-h-screen">
-        <!-- 侧边栏 -->
-        <aside class="sidebar w-64 bg-gray-900 text-white flex flex-col fixed inset-y-0 left-0 z-50">
-            <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
+        <!-- 侧边栏（w-56 = 224px） -->
+        <aside class="sidebar w-56 bg-gray-900 text-white flex flex-col fixed inset-y-0 left-0 z-50">
+            <div class="flex items-center gap-3 px-5 py-5 border-b border-gray-800">
                 <span class="text-2xl">🌾</span>
                 <span class="font-semibold tracking-tight text-lg">农保智策</span>
             </div>
             <nav class="flex-1 py-4 space-y-1" id="sideNav">
-                <a href="#dashboard" class="nav-link active-nav flex items-center gap-3 px-6 py-2.5 text-sm"><span>📊</span> 数据概览</a>
-                <a href="#forecast" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>📈</span> 未来预测</a>
-                <a href="#history" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>📉</span> 历史趋势</a>
-                <a href="#hourly24" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>🕒</span> 24小时监测</a>
-                <a href="#myinsurance" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>📑</span> 我的保单</a>
-                <a href="#advice" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>💡</span> 种植建议</a>
-                <a href="#insurance" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>🛡️</span> 保险推荐</a>
-                <a href="#policy" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>📜</span> 农业政策</a>
+                <a href="#dashboard" class="nav-link active-nav flex items-center gap-3 px-5 py-2.5 text-sm"><span>📊</span> 数据概览</a>
+                <a href="#forecast" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm"><span>📈</span> 未来预测</a>
+                <a href="#history" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm"><span>📉</span> 历史趋势</a>
+                <a href="#hourly24" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm"><span>🕒</span> 24小时监测</a>
+                <a href="#myinsurance" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm"><span>📑</span> 我的保单</a>
+                <a href="#advice" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm"><span>💡</span> 种植建议</a>
+                <a href="#insurance" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm"><span>🛡️</span> 保险推荐</a>
+                <a href="#policy" class="nav-link flex items-center gap-3 px-5 py-2.5 text-sm"><span>📜</span> 农业政策</a>
             </nav>
-            <div class="px-6 py-4 border-t border-gray-800 flex items-center gap-3">
+            <div class="px-5 py-4 border-t border-gray-800 flex items-center gap-3">
                 <div class="w-8 h-8 circle bg-indigo-500 flex items-center justify-center text-sm font-bold">郑</div>
                 <div><div class="text-sm font-medium">郑得轩</div><div class="text-xs text-gray-400">汕头市濠江区</div></div>
             </div>
         </aside>
 
-        <!-- 右侧内容区 -->
-        <div class="flex-1 ml-64 main-content">
+        <!-- 右侧内容区（ml-56 对应侧边栏宽度） -->
+        <div class="flex-1 ml-56 main-content">
             <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-4 md:px-6 py-3">
                 <div class="flex items-center justify-between gap-4">
                     <div class="text-sm font-medium text-gray-500">农保智策 · 汕头市濠江区 · 郑得轩</div>
@@ -346,7 +346,6 @@
             initHoverHighlight();
         }
 
-        // 滚动监听：KPI不可见时显示悬浮胶囊
         function initIntersectionObserver() {
             const dashboardSection = document.getElementById('dashboard');
             const floatingSummary = document.getElementById('floatingSummary');
@@ -359,11 +358,9 @@
             observer.observe(dashboardSection);
         }
 
-        // 滚动监听：侧边栏导航高亮（使用 getBoundingClientRect 更可靠）
         function initScrollSpy() {
             const sections = ['dashboard','forecast','history','hourly24','myinsurance','advice','insurance','policy'];
             const navLinks = document.querySelectorAll('#sideNav .nav-link');
-            const mainContainer = document.querySelector('.main-content');
 
             function updateActiveNav() {
                 let currentId = sections[0];
@@ -371,7 +368,6 @@
                     const el = document.getElementById(id);
                     if (!el) continue;
                     const rect = el.getBoundingClientRect();
-                    // 如果元素顶部在视口上方120px以内，则认为当前区域
                     if (rect.top <= 150) {
                         currentId = id;
                     } else {
@@ -383,13 +379,10 @@
                 });
             }
 
-            // 监听滚动事件
             window.addEventListener('scroll', updateActiveNav, { passive: true });
-            // 初始调用
             updateActiveNav();
         }
 
-        // 鼠标悬停高亮
         function initHoverHighlight() {
             const navLinks = document.querySelectorAll('#sideNav .nav-link');
             navLinks.forEach(link => {
@@ -398,10 +391,8 @@
                     link.classList.add('active-nav');
                 });
             });
-            // 鼠标离开侧边栏时，恢复滚动位置高亮
             const sideNav = document.getElementById('sideNav');
             sideNav.addEventListener('mouseleave', () => {
-                // 触发滚动更新
                 window.dispatchEvent(new Event('scroll'));
             });
         }
