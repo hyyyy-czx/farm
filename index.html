@@ -61,13 +61,19 @@
         .claim-dot.completed { background: #10b981; }
         .claim-dot.current { background: #6366f1; width: 14px; height: 14px; }
         .star-rating { color: #f59e0b; letter-spacing: 1px; }
-        /* 简介卡片样式 */
-        .policy-card, .insurance-card {
+        .policy-card, .insurance-card, .purchased-card {
             cursor: pointer;
             transition: background-color 0.15s ease;
         }
-        .policy-card:hover, .insurance-card:hover {
+        .policy-card:hover, .insurance-card:hover, .purchased-card:hover {
             background-color: #f9fafb;
+        }
+        .status-badge {
+            display: inline-block;
+            padding: 0.125rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.7rem;
+            font-weight: 500;
         }
     </style>
 </head>
@@ -94,6 +100,9 @@
                 </a>
                 <a href="#advice" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>💡</span> 种植建议
+                </a>
+                <a href="#myinsurance" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>📑</span> 我的保单
                 </a>
                 <a href="#insurance" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>🛡️</span> 保险推荐
@@ -212,6 +221,14 @@
                     </div>
                 </section>
 
+                <!-- 我的保单（已购买保险） -->
+                <section id="myinsurance" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                    <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">📑 我的保单（已投保）</h3>
+                    <div id="myInsuranceContent" class="space-y-3">
+                        <!-- 动态渲染已购保险卡片 -->
+                    </div>
+                </section>
+
                 <!-- 种植建议 + 保险推荐 -->
                 <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     <div id="advice" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
@@ -260,7 +277,7 @@
         </div>
     </div>
 
-    <!-- 详情模态框（保险/政策） -->
+    <!-- 详情模态框（保险/政策/已购保单） -->
     <div class="modal-overlay" id="detailModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -302,71 +319,7 @@
             }
         };
 
-        // 农业政策数据库（本地数据，含详细内容）
-        const POLICY_DB = [
-            {
-                id: 1,
-                title: '关于加快农业保险高质量发展的指导意见',
-                source: '农业农村部',
-                date: '2026-07-25',
-                tags: ['国家政策', '农业保险'],
-                summary: '提出扩大农业保险覆盖面，提高保障水平，优化运行机制，推动农业保险高质量发展。',
-                content: '文件指出，到2030年，农业保险深度达到1%以上，密度达到500元/人以上，基本建成功能完善、运行规范、基础完备的农业保险体系。重点强调将特色农产品保险纳入中央财政以奖代补范围，鼓励地方发展优势特色农产品保险。对农户而言，可获得更高比例的保费补贴，降低投保成本。',
-                crops: ['guava', 'dragonfruit']
-            },
-            {
-                id: 2,
-                title: '广东省政策性农业保险实施方案（2026-2028年）',
-                source: '广东省农业农村厅',
-                date: '2026-07-10',
-                tags: ['省级政策', '种植业'],
-                summary: '明确对水稻、水果等作物保险的保费补贴比例，鼓励特色农产品保险创新。',
-                content: '方案提出，对水果类保险保费补贴比例由省级财政承担40%，市县财政承担30%，农户自缴30%。对于火龙果、番石榴等地方特色水果，可纳入省级特色农产品保险奖补目录，享受额外保费补贴。同时，试点开展气象指数保险和价格指数保险，丰富产品供给。',
-                crops: ['guava', 'dragonfruit']
-            },
-            {
-                id: 3,
-                title: '汕头市濠江区特色农产品优势区建设规划',
-                source: '濠江区农业农村和水务局',
-                date: '2026-06-30',
-                tags: ['地方政策', '火龙果', '番石榴'],
-                summary: '重点支持火龙果、番石榴等特色产业发展，提供技术培训、品牌建设和保险试点。',
-                content: '规划提出，到2028年，濠江区火龙果种植面积达到1万亩，番石榴种植面积达到0.8万亩。区财政将对投保特色农产品保险的农户给予额外5%的保费补贴，并安排专项资金支持果园基础设施建设。同时，建立区级农业技术推广中心，为农户提供免费技术指导。',
-                crops: ['guava', 'dragonfruit']
-            },
-            {
-                id: 4,
-                title: '关于支持设施农业发展的通知',
-                source: '财政部、农业农村部',
-                date: '2026-06-15',
-                tags: ['设施农业', '补贴'],
-                summary: '对设施农业（含大棚、水肥一体化）给予财政补贴，提升防灾抗灾能力。',
-                content: '通知明确，对新建和改造设施农业的经营主体，中央财政按照不超过建设成本的30%给予补贴。优先支持用于种植经济作物的温室大棚、水肥一体化系统、遮阳网等设施。设施农业保险单独开发，保额更高，保障范围涵盖设施本身和棚内作物。',
-                crops: ['guava', 'dragonfruit']
-            },
-            {
-                id: 5,
-                title: '红心火龙果种植技术规程（2026年修订版）',
-                source: '广东省农业科学院',
-                date: '2026-05-20',
-                tags: ['技术标准', '火龙果'],
-                summary: '发布最新的火龙果种植管理规范，包括水肥管理、病虫害防治和采收标准。',
-                content: '规程详细规定了火龙果适宜生长的土壤酸碱度（pH 5.5-7.0）、土壤含水量（50%-70%）、温度范围（25-35°C）以及水肥一体化管理技术。特别强调在台风季节来临前应做好支架加固和排水沟清理，在连续阴雨天气后需及时喷施保护性杀菌剂。',
-                crops: ['dragonfruit']
-            },
-            {
-                id: 6,
-                title: '番石榴主要病虫害绿色防控技术指南',
-                source: '全国农业技术推广服务中心',
-                date: '2026-05-12',
-                tags: ['植保', '番石榴'],
-                summary: '推广番石榴病虫害绿色防控技术，减少化学农药使用，提高果品质量。',
-                content: '指南列出了番石榴常见病虫害（如根结线虫、炭疽病、果实蝇等）的绿色防控技术，包括使用生物农药、性诱剂、套袋、物理隔离等方法。提倡在果实膨大期采用套袋技术，可有效减少病虫害并改善果面色泽，同时建议在暴雨后及时排水并松土，减少根系病害发生。',
-                crops: ['guava']
-            }
-        ];
-
-        // 保险产品数据库（本地数据，含详细赔偿条款和推荐指数）
+        // 保险产品数据库（本地数据）
         const INSURANCE_PRODUCTS = [
             {
                 id: 'ins_rain',
@@ -442,6 +395,96 @@
             }
         ];
 
+        // 已购买保险数据（本地模拟）
+        const PURCHASED_INSURANCE = [
+            {
+                policyNo: 'POL-2026-0819',
+                productId: 'ins_rain',
+                insuredArea: 10,
+                startDate: '2026-03-01',
+                endDate: '2026-11-30',
+                premiumPaid: 8000,
+                status: '生效中',
+                claimHistory: [
+                    { date: '2026-07-15', type: '暴雨', amount: 3600, status: '已赔付' }
+                ]
+            },
+            {
+                policyNo: 'POL-2026-0720',
+                productId: 'ins_facility',
+                insuredArea: 5,
+                startDate: '2026-02-15',
+                endDate: '2027-02-14',
+                premiumPaid: 6000,
+                status: '生效中',
+                claimHistory: []
+            }
+        ];
+
+        // 农业政策数据库（本地数据，含详细内容）
+        const POLICY_DB = [
+            {
+                id: 1,
+                title: '关于加快农业保险高质量发展的指导意见',
+                source: '农业农村部',
+                date: '2026-07-25',
+                tags: ['国家政策', '农业保险'],
+                summary: '提出扩大农业保险覆盖面，提高保障水平，优化运行机制，推动农业保险高质量发展。',
+                content: '文件指出，到2030年，农业保险深度达到1%以上，密度达到500元/人以上，基本建成功能完善、运行规范、基础完备的农业保险体系。重点强调将特色农产品保险纳入中央财政以奖代补范围，鼓励地方发展优势特色农产品保险。对农户而言，可获得更高比例的保费补贴，降低投保成本。',
+                crops: ['guava', 'dragonfruit']
+            },
+            {
+                id: 2,
+                title: '广东省政策性农业保险实施方案（2026-2028年）',
+                source: '广东省农业农村厅',
+                date: '2026-07-10',
+                tags: ['省级政策', '种植业'],
+                summary: '明确对水稻、水果等作物保险的保费补贴比例，鼓励特色农产品保险创新。',
+                content: '方案提出，对水果类保险保费补贴比例由省级财政承担40%，市县财政承担30%，农户自缴30%。对于火龙果、番石榴等地方特色水果，可纳入省级特色农产品保险奖补目录，享受额外保费补贴。同时，试点开展气象指数保险和价格指数保险，丰富产品供给。',
+                crops: ['guava', 'dragonfruit']
+            },
+            {
+                id: 3,
+                title: '汕头市濠江区特色农产品优势区建设规划',
+                source: '濠江区农业农村和水务局',
+                date: '2026-06-30',
+                tags: ['地方政策', '火龙果', '番石榴'],
+                summary: '重点支持火龙果、番石榴等特色产业发展，提供技术培训、品牌建设和保险试点。',
+                content: '规划提出，到2028年，濠江区火龙果种植面积达到1万亩，番石榴种植面积达到0.8万亩。区财政将对投保特色农产品保险的农户给予额外5%的保费补贴，并安排专项资金支持果园基础设施建设。同时，建立区级农业技术推广中心，为农户提供免费技术指导。',
+                crops: ['guava', 'dragonfruit']
+            },
+            {
+                id: 4,
+                title: '关于支持设施农业发展的通知',
+                source: '财政部、农业农村部',
+                date: '2026-06-15',
+                tags: ['设施农业', '补贴'],
+                summary: '对设施农业（含大棚、水肥一体化）给予财政补贴，提升防灾抗灾能力。',
+                content: '通知明确，对新建和改造设施农业的经营主体，中央财政按照不超过建设成本的30%给予补贴。优先支持用于种植经济作物的温室大棚、水肥一体化系统、遮阳网等设施。设施农业保险单独开发，保额更高，保障范围涵盖设施本身和棚内作物。',
+                crops: ['guava', 'dragonfruit']
+            },
+            {
+                id: 5,
+                title: '红心火龙果种植技术规程（2026年修订版）',
+                source: '广东省农业科学院',
+                date: '2026-05-20',
+                tags: ['技术标准', '火龙果'],
+                summary: '发布最新的火龙果种植管理规范，包括水肥管理、病虫害防治和采收标准。',
+                content: '规程详细规定了火龙果适宜生长的土壤酸碱度（pH 5.5-7.0）、土壤含水量（50%-70%）、温度范围（25-35°C）以及水肥一体化管理技术。特别强调在台风季节来临前应做好支架加固和排水沟清理，在连续阴雨天气后需及时喷施保护性杀菌剂。',
+                crops: ['dragonfruit']
+            },
+            {
+                id: 6,
+                title: '番石榴主要病虫害绿色防控技术指南',
+                source: '全国农业技术推广服务中心',
+                date: '2026-05-12',
+                tags: ['植保', '番石榴'],
+                summary: '推广番石榴病虫害绿色防控技术，减少化学农药使用，提高果品质量。',
+                content: '指南列出了番石榴常见病虫害（如根结线虫、炭疽病、果实蝇等）的绿色防控技术，包括使用生物农药、性诱剂、套袋、物理隔离等方法。提倡在果实膨大期采用套袋技术，可有效减少病虫害并改善果面色泽，同时建议在暴雨后及时排水并松土，减少根系病害发生。',
+                crops: ['guava']
+            }
+        ];
+
         let currentCrop = 'guava';
         let weatherData = {
             current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 },
@@ -450,7 +493,6 @@
         };
         let charts = {};
         let claimModalOpen = false;
-        let detailModalOpen = false;
 
         // 初始化
         async function init() {
@@ -459,6 +501,7 @@
             updateCharts();
             updateAdvice();
             updateInsurance();
+            renderMyInsurance();
             renderPolicy();
         }
 
@@ -648,6 +691,94 @@
             document.getElementById('adviceContent').innerHTML = adviceHTML;
         }
 
+        // 渲染已购保险
+        function renderMyInsurance() {
+            const container = document.getElementById('myInsuranceContent');
+            if (PURCHASED_INSURANCE.length === 0) {
+                container.innerHTML = '<p class="text-sm text-gray-500">暂无已购保险。</p>';
+                return;
+            }
+            container.innerHTML = PURCHASED_INSURANCE.map(policy => {
+                const product = INSURANCE_PRODUCTS.find(p => p.id === policy.productId);
+                if (!product) return '';
+                return `
+                <div class="purchased-card bg-white rounded-lg border border-gray-200 p-4" onclick="openPurchasedDetail('${policy.policyNo}')">
+                    <div class="flex items-start justify-between gap-3">
+                        <div class="flex items-start gap-3 flex-1">
+                            <span class="text-2xl">${product.icon}</span>
+                            <div>
+                                <div class="flex items-center gap-2 flex-wrap">
+                                    <h4 class="font-semibold text-sm">${product.name}</h4>
+                                    <span class="status-badge bg-green-100 text-green-700">${policy.status}</span>
+                                </div>
+                                <p class="text-xs text-gray-600 mt-1">保单号：${policy.policyNo}</p>
+                                <p class="text-xs text-gray-500">保障期限：${policy.startDate} 至 ${policy.endDate}</p>
+                                <p class="text-xs text-gray-500">保费：¥${policy.premiumPaid} | 投保面积：${policy.insuredArea}亩</p>
+                            </div>
+                        </div>
+                        <span class="text-xs text-gray-400">查看详情 →</span>
+                    </div>
+                </div>
+                `;
+            }).join('');
+        }
+
+        // 打开已购保单详情模态框
+        function openPurchasedDetail(policyNo) {
+            const policy = PURCHASED_INSURANCE.find(p => p.policyNo === policyNo);
+            if (!policy) return;
+            const product = INSURANCE_PRODUCTS.find(p => p.id === policy.productId);
+            if (!product) return;
+            const starRating = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
+
+            let claimHistoryHTML = policy.claimHistory.length > 0 
+                ? policy.claimHistory.map(claim => `
+                    <div class="flex justify-between items-center text-sm py-2 border-b border-gray-100">
+                        <span>${claim.date} · ${claim.type}</span>
+                        <span class="font-semibold">¥${claim.amount}</span>
+                        <span class="text-green-600">${claim.status}</span>
+                    </div>
+                `).join('') 
+                : '<p class="text-sm text-gray-500">暂无理赔记录</p>';
+
+            const bodyHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">${product.icon}</span>
+                        <div>
+                            <h3 class="text-lg font-bold">${product.name}</h3>
+                            <span class="text-sm text-gray-500">保单号：${policy.policyNo}</span>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>被保险人：</strong>郑得轩</div>
+                        <div><strong>保障状态：</strong><span class="text-green-600 font-semibold">${policy.status}</span></div>
+                        <div><strong>保障期限：</strong>${policy.startDate} 至 ${policy.endDate}</div>
+                        <div><strong>投保面积：</strong>${policy.insuredArea}亩</div>
+                        <div><strong>已缴保费：</strong>¥${policy.premiumPaid}</div>
+                        <div><strong>免赔额：</strong>${product.deductible}</div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-sm">产品简介</h4>
+                        <p class="text-sm text-gray-700 mt-1">${product.summary}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-sm">具体赔偿条款</h4>
+                        <ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-gray-700">
+                            ${product.clauses.map(clause => `<li>${clause}</li>`).join('')}
+                        </ul>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-sm">理赔历史</h4>
+                        ${claimHistoryHTML}
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailModalTitle').textContent = `📑 ${product.name}`;
+            document.getElementById('detailModalBody').innerHTML = bodyHTML;
+            openDetailModal();
+        }
+
         // 更新保险推荐（简介卡片，点击打开详情模态框）
         function updateInsurance() {
             const container = document.getElementById('insuranceContent');
@@ -822,13 +953,11 @@
 
         // 打开/关闭详情模态框
         function openDetailModal() {
-            detailModalOpen = true;
             document.getElementById('detailModal').classList.add('active');
             document.body.style.overflow = 'hidden';
         }
 
         function closeDetailModal() {
-            detailModalOpen = false;
             document.getElementById('detailModal').classList.remove('active');
             document.body.style.overflow = 'auto';
         }
@@ -939,6 +1068,7 @@
             updateCharts();
             updateAdvice();
             updateInsurance();
+            renderMyInsurance();
             if (claimModalOpen) populateClaimModal();
         }, 30 * 60 * 1000);
     </script>
