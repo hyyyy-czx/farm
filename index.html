@@ -75,10 +75,10 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
-        /* 24小时图表卡片网格 */
+        /* 24小时图表卡片网格 - 尺寸增大 */
         .hourly-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
             gap: 1rem;
         }
         .hourly-card {
@@ -87,23 +87,66 @@
             border: 1px solid #f3f4f6;
             padding: 1rem;
             box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-            height: 180px;                /* 固定卡片高度 */
+            height: 240px;                /* 增大高度 */
             display: flex;
             flex-direction: column;
-            overflow: hidden;             /* 防止内容溢出 */
+            overflow: hidden;
         }
         .hourly-card h4 {
-            flex-shrink: 0;               /* 标题不压缩 */
-            margin-bottom: 0.5rem;
-            font-size: 0.75rem;
-            color: #6b7280;
-            font-weight: 500;
+            flex-shrink: 0;
+            margin-bottom: 0.75rem;
+            font-size: 0.95rem;           /* 增大标题字号 */
+            color: #374151;
+            font-weight: 600;
         }
         .hourly-card canvas {
-            flex: 1;                      /* 画布填充剩余空间 */
-            min-height: 0;                /* 关键：允许 flex 子元素缩小 */
+            flex: 1;
+            min-height: 0;
             width: 100% !important;
             height: 100% !important;
+        }
+        /* 风险概览卡片样式 */
+        .risk-card {
+            background: #fff;
+            border-radius: 0.75rem;
+            border: 1px solid #f3f4f6;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+            padding: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+        .risk-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f3f4f6;
+        }
+        .risk-row:last-child {
+            border-bottom: none;
+        }
+        .risk-label {
+            font-size: 0.9rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        .risk-value {
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+        .risk-level-high { color: #ef4444; }
+        .risk-level-medium { color: #f59e0b; }
+        .risk-level-low { color: #10b981; }
+        .risk-progress {
+            width: 120px;
+            height: 6px;
+            background: #f3f4f6;
+            border-radius: 3px;
+            overflow: hidden;
+            margin-left: 1rem;
+        }
+        .risk-progress-fill {
+            height: 100%;
+            border-radius: 3px;
         }
     </style>
 </head>
@@ -127,6 +170,9 @@
                 </a>
                 <a href="#history" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>📉</span> 历史趋势
+                </a>
+                <a href="#risk" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>⚠️</span> 风险概览
                 </a>
                 <a href="#hourly24" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>🕒</span> 24小时监测
@@ -227,6 +273,14 @@
                         </div>
                         <div class="text-2xl md:text-3xl font-semibold tracking-tight text-indigo-600" id="insuranceStatus">--</div>
                         <div class="mt-2 text-xs text-gray-400">根据未来风险智能推荐</div>
+                    </div>
+                </section>
+
+                <!-- 风险概览卡片（新增） -->
+                <section id="risk" class="risk-card">
+                    <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">⚠️ 综合风险概览</h3>
+                    <div id="riskContent" class="space-y-0">
+                        <!-- 动态渲染风险行 -->
                     </div>
                 </section>
 
@@ -570,6 +624,7 @@
             updateInsurance();
             renderMyInsurance();
             renderPolicy();
+            renderRisk();
         }
 
         // 获取当前天气
@@ -649,6 +704,45 @@
             document.getElementById('rainTrend').textContent = c.rain > 50 ? '⚠️ 偏高' : '正常';
             document.getElementById('soilTrend').textContent = c.soilMoist > 75 ? '⚠️ 过湿' : (c.soilMoist < 40 ? '⚠️ 偏干' : '适宜');
             document.getElementById('tempTrend').textContent = c.soilTemp > 30 ? '🔥 偏高' : '适宜';
+        }
+
+        // 渲染风险概览
+        function renderRisk() {
+            const c = weatherData.current;
+            const rainRisk = c.rain > THRESHOLD_RAIN ? '高风险' : (c.rain > 30 ? '中风险' : '低风险');
+            const soilRisk = c.soilMoist > 80 || c.soilMoist < 30 ? '高风险' : (c.soilMoist > 70 || c.soilMoist < 40 ? '中风险' : '低风险');
+            const tempRisk = c.soilTemp > 35 || c.soilTemp < 10 ? '高风险' : (c.soilTemp > 30 || c.soilTemp < 15 ? '中风险' : '低风险');
+            const windRisk = c.wind > 10 ? '高风险' : (c.wind > 6 ? '中风险' : '低风险');
+            const overallRisk = (rainRisk === '高风险' || soilRisk === '高风险' || tempRisk === '高风险' || windRisk === '高风险') ? '高风险' :
+                (rainRisk === '中风险' || soilRisk === '中风险' || tempRisk === '中风险' || windRisk === '中风险') ? '中风险' : '低风险';
+
+            const riskHTML = `
+                <div class="risk-row">
+                    <span class="risk-label">🌧️ 降雨风险</span>
+                    <span class="risk-value risk-level-${rainRisk === '高风险' ? 'high' : rainRisk === '中风险' ? 'medium' : 'low'}">${rainRisk}</span>
+                    <div class="risk-progress"><div class="risk-progress-fill ${rainRisk === '高风险' ? 'bg-red-500' : rainRisk === '中风险' ? 'bg-yellow-500' : 'bg-green-500'}" style="width:${c.rain > 100 ? 100 : c.rain}%;"></div></div>
+                </div>
+                <div class="risk-row">
+                    <span class="risk-label">💧 土壤墒情风险</span>
+                    <span class="risk-value risk-level-${soilRisk === '高风险' ? 'high' : soilRisk === '中风险' ? 'medium' : 'low'}">${soilRisk}</span>
+                    <div class="risk-progress"><div class="risk-progress-fill ${soilRisk === '高风险' ? 'bg-red-500' : soilRisk === '中风险' ? 'bg-yellow-500' : 'bg-green-500'}" style="width:${c.soilMoist}%;"></div></div>
+                </div>
+                <div class="risk-row">
+                    <span class="risk-label">🌡️ 温度风险</span>
+                    <span class="risk-value risk-level-${tempRisk === '高风险' ? 'high' : tempRisk === '中风险' ? 'medium' : 'low'}">${tempRisk}</span>
+                    <div class="risk-progress"><div class="risk-progress-fill ${tempRisk === '高风险' ? 'bg-red-500' : tempRisk === '中风险' ? 'bg-yellow-500' : 'bg-green-500'}" style="width:${Math.min(c.soilTemp,45)}%;"></div></div>
+                </div>
+                <div class="risk-row">
+                    <span class="risk-label">💨 风速风险</span>
+                    <span class="risk-value risk-level-${windRisk === '高风险' ? 'high' : windRisk === '中风险' ? 'medium' : 'low'}">${windRisk}</span>
+                    <div class="risk-progress"><div class="risk-progress-fill ${windRisk === '高风险' ? 'bg-red-500' : windRisk === '中风险' ? 'bg-yellow-500' : 'bg-green-500'}" style="width:${Math.min(c.wind,15)*6.67}%;"></div></div>
+                </div>
+                <div class="risk-row" style="border-bottom: none; padding-bottom: 0;">
+                    <span class="risk-label">📊 综合风险等级</span>
+                    <span class="risk-value risk-level-${overallRisk === '高风险' ? 'high' : overallRisk === '中风险' ? 'medium' : 'low'}">${overallRisk}</span>
+                </div>
+            `;
+            document.getElementById('riskContent').innerHTML = riskHTML;
         }
 
         // 绘制图表（未来预测 + 历史7天）
@@ -741,7 +835,8 @@
                             backgroundColor: color + '20',
                             fill: type === 'line',
                             tension: 0.3,
-                            pointRadius: 0,
+                            pointRadius: 2,           // 增大数据点，方便悬停
+                            pointHoverRadius: 6,
                             borderWidth: 2
                         }]
                     },
@@ -750,8 +845,8 @@
                         maintainAspectRatio: false,
                         plugins: { legend: { display: false } },
                         scales: {
-                            x: { display: true, ticks: { maxTicksLimit: 6, font: { size: 9 } } },
-                            y: { display: true, beginAtZero: true, ticks: { font: { size: 9 } } }
+                            x: { display: true, ticks: { maxTicksLimit: 6, font: { size: 10 } } },
+                            y: { display: true, beginAtZero: true, ticks: { font: { size: 10 } } }
                         }
                     }
                 });
@@ -1065,6 +1160,7 @@
             updateAdvice();
             updateInsurance();
             renderPolicy();
+            renderRisk();  // 作物变化可能影响风险判断（此处可扩展）
         }
 
         // 打开理赔模态框
@@ -1209,6 +1305,7 @@
             updateAdvice();
             updateInsurance();
             renderMyInsurance();
+            renderRisk();
             if (claimModalOpen) populateClaimModal();
         }, 30 * 60 * 1000);
     </script>
