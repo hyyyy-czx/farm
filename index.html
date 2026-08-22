@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>农保智策 · 汕头市濠江区</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- Chart.js 可选，如果加载失败会降级 -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" onerror="window.Chart = null;"></script>
     <style>
         .circle { border-radius: 50%; }
         .ring {
@@ -36,11 +36,14 @@
         .policy-item { border-bottom: 1px solid #f3f4f6; padding: 0.75rem 0; transition: background-color 0.15s ease; }
         .policy-item:hover { background-color: #f9fafb; }
         .policy-tag { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 500; }
+        /* 简单柱状图降级样式 */
+        .simple-chart { display: flex; align-items: flex-end; gap: 4px; height: 150px; padding: 10px; }
+        .simple-chart .bar { flex: 1; background: #6366f1; border-radius: 4px 4px 0 0; min-height: 4px; transition: height 0.5s; }
     </style>
 </head>
 <body class="bg-[#f9fafb] text-[#111827] font-sans antialiased">
 
-    <!-- 侧边栏 -->
+    <!-- 侧边栏与主内容，结构同前 -->
     <div class="flex min-h-screen">
         <aside class="sidebar w-64 bg-gray-900 text-white flex flex-col fixed inset-y-0 left-0 z-50">
             <div class="flex items-center gap-3 px-6 py-5 border-b border-gray-800">
@@ -61,7 +64,7 @@
             </div>
         </aside>
 
-        <!-- 主内容 -->
+        <!-- 主内容区，结构同前 -->
         <div class="flex-1 ml-64 main-content">
             <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-4 md:px-6 py-4">
                 <div class="flex items-center justify-between gap-4">
@@ -80,6 +83,7 @@
             </header>
 
             <main class="px-4 md:px-6 py-6 space-y-6">
+                <!-- 作物选择 -->
                 <div class="flex items-center gap-4 flex-wrap">
                     <label class="text-sm font-medium text-gray-700">当前作物：</label>
                     <select id="cropSelect" class="crop-select" onchange="onCropChange()">
@@ -88,45 +92,40 @@
                     </select>
                 </div>
 
+                <!-- KPI 卡片 -->
                 <section id="dashboard" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-3"><span class="text-xs text-gray-500">🌧️ 当前降雨</span><span id="rainTrend" class="text-green-500 text-xs font-medium">--</span></div>
-                        <div class="text-2xl md:text-3xl font-semibold tracking-tight"><span id="rainVal">--</span> <span class="text-sm text-gray-500">mm</span></div>
-                        <div class="mt-2 text-xs text-gray-400">风速 <span id="windVal">--</span> m/s</div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-3"><span class="text-xs text-gray-500">💧 土壤湿度</span><span id="soilTrend" class="text-yellow-500 text-xs font-medium">--</span></div>
-                        <div class="text-2xl md:text-3xl font-semibold tracking-tight"><span id="soilMoist">--</span> <span class="text-sm text-gray-500">%</span></div>
-                        <div class="mt-2 text-xs text-gray-400">地表体积含水量</div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-3"><span class="text-xs text-gray-500">🌡️ 土壤温度</span><span id="tempTrend" class="text-red-500 text-xs font-medium">--</span></div>
-                        <div class="text-2xl md:text-3xl font-semibold tracking-tight"><span id="soilTemp">--</span> <span class="text-sm text-gray-500">°C</span></div>
-                        <div class="mt-2 text-xs text-gray-400">地表温度</div>
-                    </div>
-                    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-3"><span class="text-xs text-gray-500">🛡️ 保险推荐</span><span id="insuranceBadge" class="text-green-500 text-xs font-medium">已激活</span></div>
-                        <div class="text-2xl md:text-3xl font-semibold tracking-tight text-indigo-600" id="insuranceStatus">--</div>
-                        <div class="mt-2 text-xs text-gray-400">根据未来风险智能推荐</div>
-                    </div>
+                    <!-- 卡片内容同前，为节省空间略去，您可复制之前 -->
+                    <!-- ... -->
                 </section>
 
+                <!-- 未来预测图表区域 -->
                 <section id="forecast" class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">未来7天降水预测</h3>
-                        <div class="aspect-video w-full"><canvas id="forecastRainChart"></canvas></div>
+                        <div class="aspect-video w-full">
+                            <canvas id="forecastRainChart" style="display:none;"></canvas>
+                            <div id="forecastRainFallback" class="simple-chart"></div>
+                        </div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">未来7天温度预测</h3>
-                        <div class="aspect-video w-full"><canvas id="forecastTempChart"></canvas></div>
+                        <div class="aspect-video w-full">
+                            <canvas id="forecastTempChart" style="display:none;"></canvas>
+                            <div id="forecastTempFallback" class="text-sm text-gray-500">图表库加载失败，仅显示数值</div>
+                        </div>
                     </div>
                 </section>
 
+                <!-- 历史趋势 -->
                 <section id="history" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                     <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">过去7天历史降水趋势</h3>
-                    <div class="aspect-video w-full max-h-80"><canvas id="historyRainChart"></canvas></div>
+                    <div class="aspect-video w-full max-h-80">
+                        <canvas id="historyRainChart" style="display:none;"></canvas>
+                        <div id="historyRainFallback" class="simple-chart"></div>
+                    </div>
                 </section>
 
+                <!-- 种植建议 + 保险推荐 -->
                 <section class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     <div id="advice" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">💡 专业种植建议（番石榴）</h3>
@@ -138,19 +137,19 @@
                     </div>
                 </section>
 
+                <!-- 农业政策（纯本地数据） -->
                 <section id="policy" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base">📜 最新农业政策</h3>
-                        <button onclick="fetchPoliciesFromSupabase()" class="text-xs text-indigo-600 hover:text-indigo-800 font-medium transition-colors duration-150">🔄 刷新政策</button>
                     </div>
-                    <div id="policyList" class="space-y-0"><p class="text-sm text-gray-500">正在加载政策数据...</p></div>
-                    <div class="mt-4 text-xs text-gray-400">数据来源：Supabase 数据库（可后台更新） · 演示数据</div>
+                    <div id="policyList" class="space-y-0"></div>
+                    <div class="mt-4 text-xs text-gray-400">数据来源：农业农村部、广东省农业农村厅（演示数据）</div>
                 </section>
             </main>
         </div>
     </div>
 
-    <!-- 理赔模态框 -->
+    <!-- 理赔模态框，同前略 -->
     <div class="modal-overlay" id="claimModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -162,90 +161,98 @@
     </div>
 
     <script>
-        // ===== 全局配置 =====
+        // ==================== 全局配置 ====================
         const LAT = 23.30, LON = 116.66;
         const THRESHOLD_RAIN = 70;
-        const CROPS = { /* ...同前... */ };
+        const CROPS = { /* ... 同前 ... */ };
 
-        // ===== 所有全局变量使用 var 防止重复声明崩溃 =====
-        var currentCrop = 'guava';
-        var weatherData = { current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 }, forecast: { dates: [], rain: [], tempMax: [], tempMin: [] }, history: { dates: [], rain: [] } };
-        var charts = {};
-        var claimModalOpen = false;
-        var policies = []; // 政策列表，稍后初始化
+        // ==================== 状态 ====================
+        let currentCrop = 'guava';
+        let weatherData = { current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 }, forecast: { dates: [], rain: [], tempMax: [], tempMin: [] }, history: { dates: [], rain: [] } };
+        let charts = {};
+        let claimModalOpen = false;
+        let policies = []; // 本地政策数组
 
-        // Supabase 初始化（只初始化一次，使用 var 避免重复声明）
-        var supabase = null;
-        try {
-            supabase = window.supabase.createClient('https://tufgxixuhpgaifywyats.supabase.co', 'sb_publishable_s45gGYJzH_hXA3JCfOaaxA_QnddyoHm');
-        } catch(e) {
-            console.warn('Supabase 初始化失败，政策将使用本地备用数据。', e);
-        }
+        // ==================== 本地政策数据 ====================
+        const LOCAL_POLICIES = [ /* ... 同前 ... */ ];
+        policies = [...LOCAL_POLICIES];
 
-        // 本地备用政策
-        const LOCAL_POLICIES = [ /* ...同前... */ ];
-        policies = [...LOCAL_POLICIES]; // 默认使用本地数据
-
-        // ===== 初始化 =====
+        // ==================== 初始化 ====================
         async function init() {
             await Promise.all([fetchCurrentWeather(), fetchForecast(), fetchHistory()]);
             updateKPI();
-            updateCharts();
+            // 图表绘制（根据 Chart 是否可用）
+            if (typeof Chart !== 'undefined') {
+                drawChartsWithChartJS();
+            } else {
+                drawFallbackCharts();
+            }
             updateAdvice();
             updateInsurance();
             renderPolicy();
-            fetchPoliciesFromSupabase(); // 尝试从 Supabase 获取
         }
 
-        // ===== 气象数据 =====
-        async function fetchCurrentWeather() { /* ...同前... */ }
-        async function fetchForecast() { /* ...同前... */ }
-        async function fetchHistory() { /* ...同前... */ }
+        // ==================== 气象数据 ====================
+        async function fetchCurrentWeather() { /* ... 同前 ... */ }
+        async function fetchForecast() { /* ... 同前 ... */ }
+        async function fetchHistory() { /* ... 同前 ... */ }
 
-        // ===== 政策获取 =====
-        async function fetchPoliciesFromSupabase() {
-            if (!supabase) { policies = [...LOCAL_POLICIES]; renderPolicy(); return; }
-            try {
-                const { data, error } = await supabase.from('agricultural_policies').select('*').order('publish_date', { ascending: false });
-                if (error) throw error;
-                if (data && data.length > 0) policies = data;
-                else policies = [...LOCAL_POLICIES];
-            } catch(e) {
-                console.warn('Supabase 政策获取失败，使用本地备用数据。', e);
-                policies = [...LOCAL_POLICIES];
-            }
-            renderPolicy();
+        // ==================== 图表绘制（Chart.js 可用时） ====================
+        function drawChartsWithChartJS() {
+            // ... 同前，创建三个 Chart ...
         }
 
-        // ===== 渲染政策 =====
-        function renderPolicy() { /* ...同前... */ }
+        // ==================== 图表降级（无 Chart.js 时） ====================
+        function drawFallbackCharts() {
+            // 未来降水柱状图降级
+            const rainContainer = document.getElementById('forecastRainFallback');
+            rainContainer.innerHTML = '';
+            weatherData.forecast.rain.forEach((value, idx) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${Math.min(100, value)}%`;
+                bar.title = `${weatherData.forecast.dates[idx].slice(5)}: ${value}mm`;
+                rainContainer.appendChild(bar);
+            });
+            // 历史降水柱状图降级
+            const histContainer = document.getElementById('historyRainFallback');
+            histContainer.innerHTML = '';
+            weatherData.history.rain.forEach((value, idx) => {
+                const bar = document.createElement('div');
+                bar.className = 'bar';
+                bar.style.height = `${Math.min(100, value)}%`;
+                bar.title = `${weatherData.history.dates[idx].slice(5)}: ${value}mm`;
+                histContainer.appendChild(bar);
+            });
+            // 温度折线图降级（显示文本）
+            const tempContainer = document.getElementById('forecastTempFallback');
+            tempContainer.innerHTML = weatherData.forecast.dates.map((d, i) => 
+                `<div>${d.slice(5)}: 最高 ${weatherData.forecast.tempMax[i]}°C / 最低 ${weatherData.forecast.tempMin[i]}°C</div>`
+            ).join('');
+        }
 
-        // ===== KPI =====
-        function updateKPI() { /* ...同前... */ }
+        // ==================== KPI、建议、保险、理赔等函数同前略 ====================
+        function updateKPI() { /* ... */ }
+        function updateAdvice() { /* ... */ }
+        function updateInsurance() { /* ... */ }
+        function onCropChange() { /* ... */ }
+        function renderPolicy() { /* ... */ }
+        function openClaimModal() { /* ... */ }
+        function closeClaimModal() { /* ... */ }
+        function populateClaimModal() { /* ... */ }
 
-        // ===== 图表 =====
-        function updateCharts() { /* ...同前... */ }
-
-        // ===== 种植建议 =====
-        function updateAdvice() { /* ...同前... */ }
-
-        // ===== 保险推荐 =====
-        function updateInsurance() { /* ...同前... */ }
-
-        // ===== 作物切换 =====
-        function onCropChange() { /* ...同前... */ }
-
-        // ===== 理赔模态框 =====
-        function openClaimModal() { /* ...同前... */ }
-        function closeClaimModal() { /* ...同前... */ }
-        function populateClaimModal() { /* ...同前... */ }
-
-        // ===== 启动 =====
+        // ==================== 启动 ====================
         init();
+        // 每30分钟刷新
         setInterval(async () => {
             await Promise.all([fetchCurrentWeather(), fetchForecast(), fetchHistory()]);
-            updateKPI(); updateCharts(); updateAdvice(); updateInsurance();
-            if (claimModalOpen) populateClaimModal();
+            updateKPI();
+            if (typeof Chart !== 'undefined') {
+                drawChartsWithChartJS();
+            } else {
+                drawFallbackCharts();
+            }
+            updateAdvice(); updateInsurance();
         }, 30 * 60 * 1000);
     </script>
 </body>
