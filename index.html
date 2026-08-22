@@ -75,6 +75,19 @@
             font-size: 0.7rem;
             font-weight: 500;
         }
+        /* 24小时图表卡片网格 */
+        .hourly-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        .hourly-card {
+            background: #fff;
+            border-radius: 0.75rem;
+            border: 1px solid #f3f4f6;
+            padding: 1rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
     </style>
 </head>
 <body class="bg-[#f9fafb] text-[#111827] font-sans antialiased">
@@ -97,6 +110,9 @@
                 </a>
                 <a href="#history" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>📉</span> 历史趋势
+                </a>
+                <a href="#hourly24" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
+                    <span>🕒</span> 24小时监测
                 </a>
                 <a href="#advice" class="flex items-center gap-3 px-6 py-2.5 text-sm font-medium text-gray-300 hover:bg-white/5 hover:text-white transition-colors duration-150">
                     <span>💡</span> 种植建议
@@ -213,11 +229,38 @@
                     </div>
                 </section>
 
-                <!-- 历史趋势图表 -->
+                <!-- 历史趋势图表（过去7天降水） -->
                 <section id="history" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                     <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">过去7天历史降水趋势</h3>
                     <div class="aspect-video w-full max-h-80">
                         <canvas id="historyRainChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- 新增：过去24小时多指标监测 -->
+                <section id="hourly24" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
+                    <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">🕒 过去24小时实时监测</h3>
+                    <div class="hourly-grid">
+                        <div class="hourly-card">
+                            <h4 class="text-xs font-medium text-gray-500 mb-2">🌧️ 降水 (mm)</h4>
+                            <canvas id="hourlyRainChart"></canvas>
+                        </div>
+                        <div class="hourly-card">
+                            <h4 class="text-xs font-medium text-gray-500 mb-2">💨 风速 (m/s)</h4>
+                            <canvas id="hourlyWindChart"></canvas>
+                        </div>
+                        <div class="hourly-card">
+                            <h4 class="text-xs font-medium text-gray-500 mb-2">💧 土壤湿度 (%)</h4>
+                            <canvas id="hourlyMoistChart"></canvas>
+                        </div>
+                        <div class="hourly-card">
+                            <h4 class="text-xs font-medium text-gray-500 mb-2">🌡️ 土壤温度 (°C)</h4>
+                            <canvas id="hourlySoilTempChart"></canvas>
+                        </div>
+                        <div class="hourly-card">
+                            <h4 class="text-xs font-medium text-gray-500 mb-2">🌡️ 气温 (°C)</h4>
+                            <canvas id="hourlyAirTempChart"></canvas>
+                        </div>
                     </div>
                 </section>
 
@@ -489,16 +532,23 @@
         let weatherData = {
             current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 },
             forecast: { dates: [], rain: [], tempMax: [], tempMin: [] },
-            history: { dates: [], rain: [] }
+            history: { dates: [], rain: [] },
+            hourly24: { times: [], rain: [], wind: [], soilMoist: [], soilTemp: [], airTemp: [] }
         };
         let charts = {};
         let claimModalOpen = false;
 
         // 初始化
         async function init() {
-            await Promise.all([fetchCurrentWeather(), fetchForecast(), fetchHistory()]);
+            await Promise.all([
+                fetchCurrentWeather(),
+                fetchForecast(),
+                fetchHistory(),
+                fetchPast24h()
+            ]);
             updateKPI();
             updateCharts();
+            updatePast24hCharts();
             updateAdvice();
             updateInsurance();
             renderMyInsurance();
@@ -554,6 +604,23 @@
             }
         }
 
+        // 获取过去24小时逐小时数据
+        async function fetchPast24h() {
+            try {
+                const res = await fetch(`https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}&hourly=precipitation,wind_speed_10m,soil_temperature_0cm,soil_moisture_0_to_1cm,temperature_2m&past_days=1&forecast_days=0&timezone=Asia/Shanghai`);
+                const data = await res.json();
+                const hourly = data.hourly;
+                weatherData.hourly24.times = hourly.time;
+                weatherData.hourly24.rain = hourly.precipitation;
+                weatherData.hourly24.wind = hourly.wind_speed_10m;
+                weatherData.hourly24.soilTemp = hourly.soil_temperature_0cm;
+                weatherData.hourly24.soilMoist = hourly.soil_moisture_0_to_1cm.map(v => Math.round(v * 100));
+                weatherData.hourly24.airTemp = hourly.temperature_2m;
+            } catch(e) {
+                console.error('过去24小时数据获取失败', e);
+            }
+        }
+
         // 更新KPI
         function updateKPI() {
             const c = weatherData.current;
@@ -567,7 +634,7 @@
             document.getElementById('tempTrend').textContent = c.soilTemp > 30 ? '🔥 偏高' : '适宜';
         }
 
-        // 绘制图表
+        // 绘制图表（未来预测 + 历史7天）
         function updateCharts() {
             Object.values(charts).forEach(chart => chart?.destroy());
 
@@ -628,6 +695,54 @@
                     plugins: { legend: { display: false } }
                 }
             });
+        }
+
+        // 绘制过去24小时多指标图表
+        function updatePast24hCharts() {
+            // 如果已有图表实例，销毁
+            Object.values(charts).forEach(chart => {
+                if (chart?.canvas?.id?.startsWith('hourly')) chart.destroy();
+            });
+
+            const labels = weatherData.hourly24.times.map(t => {
+                const d = new Date(t);
+                return d.getHours() + ':00';
+            });
+
+            const makeChart = (canvasId, label, data, color, type = 'line') => {
+                const ctx = document.getElementById(canvasId).getContext('2d');
+                return new Chart(ctx, {
+                    type: type,
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: label,
+                            data: data,
+                            borderColor: color,
+                            backgroundColor: color + '20',
+                            fill: type === 'line',
+                            tension: 0.3,
+                            pointRadius: 0,
+                            borderWidth: 2
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: { legend: { display: false } },
+                        scales: {
+                            x: { display: true, ticks: { maxTicksLimit: 6, font: { size: 9 } } },
+                            y: { display: true, beginAtZero: true, ticks: { font: { size: 9 } } }
+                        }
+                    }
+                });
+            };
+
+            charts.hourlyRain = makeChart('hourlyRainChart', '降水 (mm)', weatherData.hourly24.rain, '#6366f1', 'bar');
+            charts.hourlyWind = makeChart('hourlyWindChart', '风速 (m/s)', weatherData.hourly24.wind, '#f59e0b');
+            charts.hourlyMoist = makeChart('hourlyMoistChart', '土壤湿度 (%)', weatherData.hourly24.soilMoist, '#3b82f6');
+            charts.hourlySoilTemp = makeChart('hourlySoilTempChart', '土壤温度 (°C)', weatherData.hourly24.soilTemp, '#ef4444');
+            charts.hourlyAirTemp = makeChart('hourlyAirTempChart', '气温 (°C)', weatherData.hourly24.airTemp, '#10b981');
         }
 
         // 更新种植建议
@@ -1063,9 +1178,15 @@
         init();
         // 每30分钟刷新一次数据
         setInterval(async () => {
-            await Promise.all([fetchCurrentWeather(), fetchForecast(), fetchHistory()]);
+            await Promise.all([
+                fetchCurrentWeather(),
+                fetchForecast(),
+                fetchHistory(),
+                fetchPast24h()
+            ]);
             updateKPI();
             updateCharts();
+            updatePast24hCharts();
             updateAdvice();
             updateInsurance();
             renderMyInsurance();
