@@ -26,14 +26,12 @@
         .modal-overlay {
             position: fixed; inset: 0; background: rgba(0,0,0,0.5);
             display: flex; align-items: center; justify-content: center;
-            z-index: 100; opacity: 0; pointer-events: none;
-            transition: opacity 0.3s ease;
+            z-index: 100; opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
         }
         .modal-overlay.active { opacity: 1; pointer-events: auto; }
         .modal-content {
             background: #fff; border-radius: 0.75rem; box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-            max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto;
-            padding: 1.5rem;
+            max-width: 800px; width: 90%; max-height: 90vh; overflow-y: auto; padding: 1.5rem;
         }
         .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
         .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: #6b7280; padding: 0.25rem; }
@@ -48,41 +46,42 @@
         .policy-card, .insurance-card, .purchased-card { cursor: pointer; transition: background-color 0.15s ease; }
         .policy-card:hover, .insurance-card:hover, .purchased-card:hover { background-color: #f9fafb; }
         .status-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 500; }
-        /* 滚动摘要栏 — 位于 header 内部，平滑过渡 */
-        .scroll-summary-wrap {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.5s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.4s ease, padding 0.4s ease;
-            opacity: 0;
-            padding: 0 1.5rem;
-        }
-        .scroll-summary-wrap.visible {
-            max-height: 80px;
-            opacity: 1;
-            padding: 0.5rem 1.5rem 0.75rem;
-            border-top: 1px solid #f3f4f6;
-        }
-        .scroll-summary-bar {
+        /* 悬浮摘要胶囊 */
+        .floating-summary {
+            position: fixed;
+            top: 16px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-80px);
+            z-index: 60;
+            background: rgba(255,255,255,0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid #e5e7eb;
+            border-radius: 999px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+            padding: 0.35rem 1rem;
             display: flex;
             align-items: center;
             gap: 0.75rem;
-            overflow-x: auto;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
             white-space: nowrap;
+            overflow-x: auto;
+            max-width: calc(100vw - 2rem);
         }
-        .summary-item {
+        .floating-summary.visible {
+            transform: translateX(-50%) translateY(0);
+        }
+        .floating-summary-item {
             display: flex;
             align-items: center;
-            gap: 0.5rem;
-            padding: 0.35rem 0.65rem;
-            background: #f9fafb;
-            border-radius: 0.5rem;
-            border: 1px solid #f3f4f6;
-            white-space: nowrap;
+            gap: 0.4rem;
             flex-shrink: 0;
+            font-size: 0.8rem;
         }
-        .summary-item .summary-icon { font-size: 1.1rem; }
-        .summary-item .summary-value { font-weight: 600; font-size: 0.85rem; }
-        .summary-item .summary-label { font-size: 0.7rem; color: #6b7280; }
+        .floating-summary-item .fs-icon { font-size: 1rem; }
+        .floating-summary-item .fs-value { font-weight: 600; }
+        .floating-summary-item .fs-label { color: #6b7280; }
+        .fs-divider { width: 1px; height: 20px; background: #e5e7eb; flex-shrink: 0; }
         /* 24小时卡片 */
         .hourly-grid { display: grid; grid-template-columns: 1fr; gap: 1.25rem; }
         @media (min-width: 640px) { .hourly-grid { grid-template-columns: repeat(2, 1fr); } }
@@ -151,10 +150,9 @@
 
         <!-- 右侧内容区 -->
         <div class="flex-1 ml-64 main-content">
-            <!-- 顶部工具栏 -->
-            <header class="bg-white border-b border-gray-200 sticky top-0 z-40">
-                <!-- 第一行：用户信息 + 铃铛 -->
-                <div class="px-4 md:px-6 py-3 flex items-center justify-between">
+            <!-- 顶部工具栏（单行） -->
+            <header class="bg-white border-b border-gray-200 sticky top-0 z-40 px-4 md:px-6 py-3">
+                <div class="flex items-center justify-between gap-4">
                     <div class="text-sm font-medium text-gray-500">农保智策 · 汕头市濠江区 · 郑得轩</div>
                     <div class="flex items-center gap-3 shrink-0">
                         <button onclick="openClaimModal()" title="查看理赔详情（模拟理赔）" aria-label="打开理赔详情"
@@ -165,22 +163,25 @@
                         <div class="w-8 h-8 circle bg-indigo-500 flex items-center justify-center text-white text-sm font-bold">郑</div>
                     </div>
                 </div>
-                <!-- 第二行：滚动摘要栏（KPI不可见时平滑展开） -->
-                <div class="scroll-summary-wrap" id="scrollSummaryWrap">
-                    <div class="scroll-summary-bar">
-                        <div class="summary-item"><span class="summary-icon">📅</span><div><div class="summary-value" id="scrollDate">--</div><div class="summary-label">今日</div></div></div>
-                        <div class="summary-item"><span class="summary-icon" id="scrollWeatherIcon">⛅</span><div><div class="summary-value" id="scrollRain">--</div><div class="summary-label">降雨</div></div></div>
-                        <div class="summary-item"><span class="summary-icon">💨</span><div><div class="summary-value" id="scrollWind">--</div><div class="summary-label">风速</div></div></div>
-                        <div class="summary-item"><span class="summary-icon">💧</span><div><div class="summary-value" id="scrollMoist">--</div><div class="summary-label">土壤湿度</div></div></div>
-                        <div class="summary-item"><span class="summary-icon">🌡️</span><div><div class="summary-value" id="scrollTemp">--</div><div class="summary-label">土壤温度</div></div></div>
-                        <div class="summary-item" id="scrollRiskBadge"><span class="summary-icon">⚠️</span><div><div class="summary-value" id="scrollRisk">--</div><div class="summary-label">风险</div></div></div>
-                    </div>
-                </div>
             </header>
+
+            <!-- 悬浮摘要胶囊（KPI不可见时出现） -->
+            <div class="floating-summary" id="floatingSummary">
+                <div class="floating-summary-item"><span class="fs-icon">📅</span><span class="fs-value" id="fsDate">--</span></div>
+                <div class="fs-divider"></div>
+                <div class="floating-summary-item"><span class="fs-icon" id="fsWeatherIcon">⛅</span><span class="fs-value" id="fsRain">--</span><span class="fs-label">降雨</span></div>
+                <div class="fs-divider"></div>
+                <div class="floating-summary-item"><span class="fs-icon">💨</span><span class="fs-value" id="fsWind">--</span><span class="fs-label">风速</span></div>
+                <div class="fs-divider"></div>
+                <div class="floating-summary-item"><span class="fs-icon">💧</span><span class="fs-value" id="fsMoist">--</span><span class="fs-label">湿度</span></div>
+                <div class="fs-divider"></div>
+                <div class="floating-summary-item"><span class="fs-icon">🌡️</span><span class="fs-value" id="fsTemp">--</span><span class="fs-label">地温</span></div>
+                <div class="fs-divider"></div>
+                <div class="floating-summary-item"><span class="fs-icon">⚠️</span><span class="fs-value" id="fsRisk">--</span></div>
+            </div>
 
             <!-- 主体内容 -->
             <main class="px-4 md:px-6 py-6 space-y-6">
-                <!-- 作物选择 -->
                 <div class="flex items-center gap-4 flex-wrap">
                     <label class="text-sm font-medium text-gray-700">当前作物：</label>
                     <select id="cropSelect" class="crop-select" onchange="onCropChange()">
@@ -189,51 +190,36 @@
                     </select>
                 </div>
 
-                <!-- KPI 卡片网格（5个卡片） -->
+                <!-- KPI 卡片网格（5个） -->
                 <section id="dashboard" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 md:gap-5">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-5 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs text-gray-500">🌧️ 当前降雨</span>
-                            <span id="rainTrend" class="text-green-500 text-xs font-medium">--</span>
-                        </div>
+                        <div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500">🌧️ 当前降雨</span><span id="rainTrend" class="text-green-500 text-xs font-medium">--</span></div>
                         <div class="text-2xl md:text-3xl font-semibold tracking-tight"><span id="rainVal">--</span> <span class="text-sm text-gray-500">mm</span></div>
                         <div class="mt-2 text-xs text-gray-400">实时监测</div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-5 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs text-gray-500">💨 当前风速</span>
-                            <span id="windTrend" class="text-green-500 text-xs font-medium">--</span>
-                        </div>
+                        <div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500">💨 当前风速</span><span id="windTrend" class="text-green-500 text-xs font-medium">--</span></div>
                         <div class="text-2xl md:text-3xl font-semibold tracking-tight"><span id="windVal">--</span> <span class="text-sm text-gray-500">m/s</span></div>
                         <div class="mt-2 text-xs text-gray-400">实时监测</div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-5 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs text-gray-500">💧 土壤湿度</span>
-                            <span id="soilTrend" class="text-yellow-500 text-xs font-medium">--</span>
-                        </div>
+                        <div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500">💧 土壤湿度</span><span id="soilTrend" class="text-yellow-500 text-xs font-medium">--</span></div>
                         <div class="text-2xl md:text-3xl font-semibold tracking-tight"><span id="soilMoist">--</span> <span class="text-sm text-gray-500">%</span></div>
                         <div class="mt-2 text-xs text-gray-400">地表体积含水量</div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-5 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs text-gray-500">🌡️ 土壤温度</span>
-                            <span id="tempTrend" class="text-red-500 text-xs font-medium">--</span>
-                        </div>
+                        <div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500">🌡️ 土壤温度</span><span id="tempTrend" class="text-red-500 text-xs font-medium">--</span></div>
                         <div class="text-2xl md:text-3xl font-semibold tracking-tight"><span id="soilTemp">--</span> <span class="text-sm text-gray-500">°C</span></div>
                         <div class="mt-2 text-xs text-gray-400">地表温度</div>
                     </div>
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-5 group hover:shadow-md transition-shadow duration-150">
-                        <div class="flex items-center justify-between mb-2">
-                            <span class="text-xs text-gray-500">🛡️ 保险推荐</span>
-                            <span id="insuranceBadge" class="text-green-500 text-xs font-medium">已激活</span>
-                        </div>
+                        <div class="flex items-center justify-between mb-2"><span class="text-xs text-gray-500">🛡️ 保险推荐</span><span id="insuranceBadge" class="text-green-500 text-xs font-medium">已激活</span></div>
                         <div class="text-2xl md:text-3xl font-semibold tracking-tight text-indigo-600" id="insuranceStatus">--</div>
                         <div class="mt-2 text-xs text-gray-400">根据未来风险智能推荐</div>
                     </div>
                 </section>
 
-                <!-- 其余部分保持不变 -->
+                <!-- 未来预测 -->
                 <section id="forecast" class="grid grid-cols-1 lg:grid-cols-2 gap-4 md:gap-6">
                     <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">未来7天降水预测</h3>
@@ -245,6 +231,7 @@
                     </div>
                 </section>
 
+                <!-- 历史趋势 -->
                 <section id="history" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                     <h3 class="font-semibold tracking-tight text-sm md:text-base mb-4">过去7天历史降水趋势</h3>
                     <div class="aspect-video w-full max-h-80"><canvas id="historyRainChart"></canvas></div>
@@ -317,9 +304,24 @@
             guava: { name: '番石榴', optimalMoisture: { min: 60, max: 75 }, optimalTemp: { min: 20, max: 30 }, rainSensitivity: '番石榴花期和果实膨大期对水分敏感，过多降雨易导致落花落果和果实开裂。', droughtSensitivity: '番石榴根系较浅，长时间干旱会导致果实发育不良。', windSensitivity: '风力超过8m/s可能造成枝条折断和果实擦伤。', insuranceBase: '番石榴种植保险', insuredAmountPerMu: 10000, premiumRate: 0.08 },
             dragonfruit: { name: '红心火龙果', optimalMoisture: { min: 50, max: 70 }, optimalTemp: { min: 25, max: 35 }, rainSensitivity: '火龙果耐旱怕涝，连续降雨易导致根部腐烂，且花果期遇暴雨会严重影响授粉。', droughtSensitivity: '火龙果虽耐旱，但长期缺水会降低产量和品质。', windSensitivity: '火龙果枝条肉质，大风易造成倒伏和断裂。', insuranceBase: '火龙果种植保险', insuredAmountPerMu: 12000, premiumRate: 0.07 }
         };
-        const INSURANCE_PRODUCTS = [ /* 同上 */ ];
-        const PURCHASED_INSURANCE = [ /* 同上 */ ];
-        const POLICY_DB = [ /* 同上 */ ];
+        const INSURANCE_PRODUCTS = [
+            { id: 'ins_rain', name: '暴雨指数保险', icon: '🌧️', applicableCrops: ['guava','dragonfruit'], rating: 5, ratingText: '强烈推荐', premiumExample: '约 ¥800/亩/年', coverage: '¥10,000-12,000/亩', deductible: '¥500', summary: '针对暴雨、洪涝灾害，当降雨量达到阈值（如70mm/日）自动触发理赔，无需现场查勘。', clauses: ['保险责任：在保险期间内，当单日降雨量达到或超过约定的起赔线（70mm）时，保险人按保险合同约定负责赔偿。','赔偿标准：当降雨量达到70mm但不足100mm时，按保额的40%赔偿；达到100mm及以上时，按保额的60%赔偿。','免赔额：每次事故免赔额为¥500或损失金额的10%，以高者为准。','理赔流程：自动触发，无需报案，系统通过气象数据直接定损并支付赔款。'] },
+            { id: 'ins_high_temp', name: '高温热害保险', icon: '🔥', applicableCrops: ['dragonfruit'], rating: 4, ratingText: '推荐', premiumExample: '约 ¥600/亩/年', coverage: '¥8,000-10,000/亩', deductible: '¥300', summary: '针对持续高温导致火龙果日灼、减产，当连续3天最高气温≥35°C时触发理赔。', clauses: ['保险责任：在保险期间内，当连续3天（含）以上日最高气温≥35°C时，对因此造成的火龙果损失负责赔偿。','赔偿标准：连续3-5天高温，按保额的30%赔偿；连续6天及以上，按保额的50%赔偿。','免赔额：每次事故免赔额¥300。','理赔流程：自动触发，依据气象部门发布的气温数据核定，无需现场查勘。'] },
+            { id: 'ins_facility', name: '设施农业保险', icon: '🏗️', applicableCrops: ['guava','dragonfruit'], rating: 4, ratingText: '推荐', premiumExample: '约 ¥1,200/亩/年', coverage: '设施+作物 ¥20,000/亩', deductible: '¥1,000', summary: '保障大棚、支架、水肥一体化系统及棚内作物，因风灾、暴雨、冰雹等造成的损失。', clauses: ['保险责任：因暴雨、洪水、风灾、冰雹等自然灾害造成设施损坏或棚内作物损失，保险人负责赔偿。','赔偿标准：设施部分按实际修复费用赔偿，最高不超过设施保险金额；作物部分按受灾面积和损失程度计算。','免赔额：每次事故免赔额¥1,000。','理赔流程：需在24小时内报案，由查勘员现场定损，提交相关证明材料后10个工作日内赔付。'] },
+            { id: 'ins_price', name: '价格指数保险', icon: '📈', applicableCrops: ['guava','dragonfruit'], rating: 3, ratingText: '谨慎推荐', premiumExample: '约 ¥500/亩/年', coverage: '¥5,000-8,000/亩', deductible: '无', summary: '保障因市场价格波动导致收益下降，当收购价低于目标价格时触发理赔。', clauses: ['保险责任：在保险期间内，当约定的农产品收购均价低于目标价格时，保险人按差价进行赔偿。','赔偿标准：赔偿金额 = (目标价格 - 实际均价) × 约定产量 × 投保面积 × 保险比例。','免赔额：无免赔额。','理赔流程：根据当地农产品批发市场或官方发布的价格数据自动计算，无需报案。'] }
+        ];
+        const PURCHASED_INSURANCE = [
+            { policyNo: 'POL-2026-0819', productId: 'ins_rain', insuredArea: 10, startDate: '2026-03-01', endDate: '2026-11-30', premiumPaid: 8000, status: '生效中', claimHistory: [{ date: '2026-07-15', type: '暴雨', amount: 3600, status: '已赔付' }] },
+            { policyNo: 'POL-2026-0720', productId: 'ins_facility', insuredArea: 5, startDate: '2026-02-15', endDate: '2027-02-14', premiumPaid: 6000, status: '生效中', claimHistory: [] }
+        ];
+        const POLICY_DB = [
+            { id: 1, title: '关于加快农业保险高质量发展的指导意见', source: '农业农村部', date: '2026-07-25', tags: ['国家政策','农业保险'], summary: '提出扩大农业保险覆盖面，提高保障水平，优化运行机制。', content: '文件指出，到2030年，农业保险深度达到1%以上。重点强调将特色农产品保险纳入中央财政以奖代补范围。', crops: ['guava','dragonfruit'] },
+            { id: 2, title: '广东省政策性农业保险实施方案（2026-2028年）', source: '广东省农业农村厅', date: '2026-07-10', tags: ['省级政策','种植业'], summary: '明确水果类保险保费补贴比例。', content: '省级财政承担40%，市县财政承担30%，农户自缴30%。试点开展气象指数保险和价格指数保险。', crops: ['guava','dragonfruit'] },
+            { id: 3, title: '汕头市濠江区特色农产品优势区建设规划', source: '濠江区农业农村和水务局', date: '2026-06-30', tags: ['地方政策','火龙果','番石榴'], summary: '重点支持火龙果、番石榴等特色产业。', content: '到2028年，火龙果种植面积达到1万亩。区财政给予额外5%保费补贴。', crops: ['guava','dragonfruit'] },
+            { id: 4, title: '关于支持设施农业发展的通知', source: '财政部、农业农村部', date: '2026-06-15', tags: ['设施农业','补贴'], summary: '对设施农业给予财政补贴。', content: '中央财政按照不超过建设成本的30%给予补贴。', crops: ['guava','dragonfruit'] },
+            { id: 5, title: '红心火龙果种植技术规程（2026年修订版）', source: '广东省农业科学院', date: '2026-05-20', tags: ['技术标准','火龙果'], summary: '发布火龙果种植管理规范。', content: '规程详细规定了火龙果适宜生长的土壤酸碱度、土壤含水量、温度范围等。', crops: ['dragonfruit'] },
+            { id: 6, title: '番石榴主要病虫害绿色防控技术指南', source: '全国农业技术推广服务中心', date: '2026-05-12', tags: ['植保','番石榴'], summary: '推广番石榴绿色防控技术。', content: '指南列出了番石榴常见病虫害的绿色防控技术。', crops: ['guava'] }
+        ];
 
         let currentCrop = 'guava';
         let weatherData = { current: { rain: 0, wind: 0, soilMoist: 0, soilTemp: 0 }, forecast: { dates: [], rain: [], tempMax: [], tempMin: [] }, history: { dates: [], rain: [] }, hourly24: { times: [], rain: [], wind: [], soilMoist: [], soilTemp: [], airTemp: [] } };
@@ -329,7 +331,7 @@
 
         async function init() {
             await Promise.all([fetchCurrentWeather(), fetchForecast(), fetchHistory(), fetchPast24h()]);
-            updateScrollSummary();
+            updateFloatingSummary();
             updateKPI();
             updateCharts();
             updatePast24hCharts();
@@ -343,30 +345,30 @@
 
         function initIntersectionObserver() {
             const dashboardSection = document.getElementById('dashboard');
-            const summaryWrap = document.getElementById('scrollSummaryWrap');
+            const floatingSummary = document.getElementById('floatingSummary');
             const observer = new IntersectionObserver((entries) => {
                 entries.forEach(entry => {
                     if (entry.isIntersecting) {
-                        summaryWrap.classList.remove('visible');
+                        floatingSummary.classList.remove('visible');
                     } else {
-                        summaryWrap.classList.add('visible');
+                        floatingSummary.classList.add('visible');
                     }
                 });
-            }, { threshold: 0.05, rootMargin: '-60px 0px 0px 0px' });
+            }, { threshold: 0.05, rootMargin: '-40px 0px 0px 0px' });
             observer.observe(dashboardSection);
         }
 
-        function updateScrollSummary() {
+        function updateFloatingSummary() {
             const now = new Date();
-            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
-            document.getElementById('scrollDate').textContent = `${now.getMonth()+1}月${now.getDate()}日 周${weekdays[now.getDay()]}`;
+            const weekdays = ['日','一','二','三','四','五','六'];
+            document.getElementById('fsDate').textContent = `${now.getMonth()+1}月${now.getDate()}日 周${weekdays[now.getDay()]}`;
             const c = weatherData.current;
-            document.getElementById('scrollRain').textContent = c.rain.toFixed(1) + 'mm';
-            document.getElementById('scrollWind').textContent = c.wind.toFixed(1) + 'm/s';
-            document.getElementById('scrollMoist').textContent = c.soilMoist + '%';
-            document.getElementById('scrollTemp').textContent = c.soilTemp.toFixed(1) + '°C';
-            document.getElementById('scrollRisk').textContent = currentRiskLevelText;
-            const icon = document.getElementById('scrollWeatherIcon');
+            document.getElementById('fsRain').textContent = c.rain.toFixed(1) + 'mm';
+            document.getElementById('fsWind').textContent = c.wind.toFixed(1) + 'm/s';
+            document.getElementById('fsMoist').textContent = c.soilMoist + '%';
+            document.getElementById('fsTemp').textContent = c.soilTemp.toFixed(1) + '°C';
+            document.getElementById('fsRisk').textContent = currentRiskLevelText;
+            const icon = document.getElementById('fsWeatherIcon');
             if (c.rain > 50) icon.textContent = '🌧️';
             else if (c.rain > 20) icon.textContent = '🌦️';
             else if (c.rain > 5) icon.textContent = '⛅';
@@ -450,15 +452,11 @@
         }
 
         function updatePast24hCharts() {
-            if (charts.hourlyRain) charts.hourlyRain.destroy();
-            if (charts.hourlyWind) charts.hourlyWind.destroy();
-            if (charts.hourlyMoist) charts.hourlyMoist.destroy();
-            if (charts.hourlySoilTemp) charts.hourlySoilTemp.destroy();
-            if (charts.hourlyAirTemp) charts.hourlyAirTemp.destroy();
+            ['hourlyRain','hourlyWind','hourlyMoist','hourlySoilTemp','hourlyAirTemp'].forEach(k => { if (charts[k]) charts[k].destroy(); });
             const labels = weatherData.hourly24.times.map(t => { const d = new Date(t); return d.getHours() + ':00'; });
             const makeChart = (canvasId, label, data, color, type = 'line') => {
                 const ctx = document.getElementById(canvasId).getContext('2d');
-                return new Chart(ctx, { type: type, data: { labels, datasets: [{ label, data, borderColor: color, backgroundColor: color + '20', fill: type === 'line', tension: 0.3, pointRadius: 0, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: true, ticks: { maxTicksLimit: 4, font: { size: 10 } } }, y: { display: true, beginAtZero: true, ticks: { font: { size: 10 } } } } } });
+                return new Chart(ctx, { type, data: { labels, datasets: [{ label, data, borderColor: color, backgroundColor: color + '20', fill: type === 'line', tension: 0.3, pointRadius: 0, borderWidth: 2 }] }, options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { x: { display: true, ticks: { maxTicksLimit: 4, font: { size: 10 } } }, y: { display: true, beginAtZero: true, ticks: { font: { size: 10 } } } } } });
             };
             charts.hourlyRain = makeChart('hourlyRainChart', '降水 (mm)', weatherData.hourly24.rain, '#6366f1', 'bar');
             charts.hourlyWind = makeChart('hourlyWindChart', '风速 (m/s)', weatherData.hourly24.wind, '#f59e0b');
@@ -469,6 +467,7 @@
 
         function updateRiskAssessment() {
             const d = weatherData.hourly24;
+            if (!d.rain.length) return;
             const rainTotal = d.rain.reduce((a,b)=>a+b,0);
             const rainMax = Math.max(...d.rain, 0);
             const windAvg = d.wind.reduce((a,b)=>a+b,0) / d.wind.length;
@@ -527,7 +526,7 @@
             else if (riskScore < 50) { badge.textContent = '中等风险'; badge.className = 'risk-badge risk-medium'; summary.textContent = '存在' + riskFlags.join('、') + '，请注意防范'; currentRiskLevelText = '中等风险'; }
             else if (riskScore < 75) { badge.textContent = '高风险'; badge.className = 'risk-badge risk-high'; summary.textContent = riskFlags.join('、') + '，建议采取应对措施'; currentRiskLevelText = '高风险'; }
             else { badge.textContent = '极高风险'; badge.className = 'risk-badge risk-extreme'; summary.textContent = riskFlags.join('、') + '，建议立即采取防护措施'; currentRiskLevelText = '极高风险'; }
-            updateScrollSummary();
+            updateFloatingSummary();
             let insuranceAdvice = '基础保险即可';
             if (riskScore >= 50) insuranceAdvice = '建议投保暴雨指数保险';
             if (tempRisk === '高') insuranceAdvice = '建议增加高温热害保险';
@@ -542,28 +541,20 @@
             let adviceHTML = '';
             const rainTotal = fc.rain.reduce((a,b)=>a+b,0);
             const maxRainDay = Math.max(...fc.rain);
-            if (maxRainDay > THRESHOLD_RAIN || rainTotal > 200) {
-                adviceHTML += `<div class="p-3 bg-red-50 rounded-lg border border-red-200"><strong class="text-red-700">暴雨风险预警</strong><p class="mt-1">未来7天累计降雨 ${rainTotal.toFixed(1)}mm，最大单日降雨 ${maxRainDay.toFixed(1)}mm。${crop.rainSensitivity}</p><ul class="list-disc pl-5 mt-2"><li>立即清理排水沟，确保田间无积水。</li><li>提前采收已成熟果实，减少裂果损失。</li><li>雨后及时喷施杀菌剂预防病害。</li></ul></div>`;
-            } else if (c.soilMoist > crop.optimalMoisture.max) {
-                adviceHTML += `<div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200"><strong class="text-yellow-700">土壤湿度过高</strong><p class="mt-1">当前土壤湿度 ${c.soilMoist}%，已超过${crop.name}适宜上限 ${crop.optimalMoisture.max}%。${crop.rainSensitivity}</p><p>建议暂停灌溉，开沟排水，并注意根部病害。</p></div>`;
-            } else if (c.soilMoist < crop.optimalMoisture.min) {
-                adviceHTML += `<div class="p-3 bg-orange-50 rounded-lg border border-orange-200"><strong class="text-orange-700">土壤湿度偏低</strong><p class="mt-1">当前土壤湿度 ${c.soilMoist}%，低于${crop.name}适宜下限 ${crop.optimalMoisture.min}%。${crop.droughtSensitivity}</p><p>建议适量灌溉，保持土壤湿润，但避免积水。</p></div>`;
-            }
-            if (c.soilTemp > crop.optimalTemp.max || c.soilTemp < crop.optimalTemp.min) {
-                adviceHTML += `<div class="p-3 bg-blue-50 rounded-lg border border-blue-200"><strong class="text-blue-700">温度异常</strong><p class="mt-1">当前土壤温度 ${c.soilTemp.toFixed(1)}°C，${crop.name}适宜温度 ${crop.optimalTemp.min}-${crop.optimalTemp.max}°C。</p><p>${c.soilTemp > crop.optimalTemp.max ? '建议覆盖遮阳网，增加通风，降低地温。' : '建议覆盖地膜或增施有机肥提高地温。'}</p></div>`;
-            }
-            if (c.wind > 8) {
-                adviceHTML += `<div class="p-3 bg-purple-50 rounded-lg border border-purple-200"><strong class="text-purple-700">大风风险</strong><p class="mt-1">当前风速 ${c.wind.toFixed(1)} m/s。${crop.windSensitivity}</p><p>建议加固支架，绑缚枝条，减少风害。</p></div>`;
-            }
+            if (maxRainDay > THRESHOLD_RAIN || rainTotal > 200) { adviceHTML += `<div class="p-3 bg-red-50 rounded-lg border border-red-200"><strong class="text-red-700">暴雨风险预警</strong><p class="mt-1">未来7天累计降雨 ${rainTotal.toFixed(1)}mm，最大单日降雨 ${maxRainDay.toFixed(1)}mm。${crop.rainSensitivity}</p><ul class="list-disc pl-5 mt-2"><li>立即清理排水沟，确保田间无积水。</li><li>提前采收已成熟果实，减少裂果损失。</li><li>雨后及时喷施杀菌剂预防病害。</li></ul></div>`; }
+            else if (c.soilMoist > crop.optimalMoisture.max) { adviceHTML += `<div class="p-3 bg-yellow-50 rounded-lg border border-yellow-200"><strong class="text-yellow-700">土壤湿度过高</strong><p class="mt-1">当前土壤湿度 ${c.soilMoist}%，已超过${crop.name}适宜上限 ${crop.optimalMoisture.max}%。${crop.rainSensitivity}</p><p>建议暂停灌溉，开沟排水，并注意根部病害。</p></div>`; }
+            else if (c.soilMoist < crop.optimalMoisture.min) { adviceHTML += `<div class="p-3 bg-orange-50 rounded-lg border border-orange-200"><strong class="text-orange-700">土壤湿度偏低</strong><p class="mt-1">当前土壤湿度 ${c.soilMoist}%，低于${crop.name}适宜下限 ${crop.optimalMoisture.min}%。${crop.droughtSensitivity}</p><p>建议适量灌溉，保持土壤湿润，但避免积水。</p></div>`; }
+            if (c.soilTemp > crop.optimalTemp.max || c.soilTemp < crop.optimalTemp.min) { adviceHTML += `<div class="p-3 bg-blue-50 rounded-lg border border-blue-200"><strong class="text-blue-700">温度异常</strong><p class="mt-1">当前土壤温度 ${c.soilTemp.toFixed(1)}°C，${crop.name}适宜温度 ${crop.optimalTemp.min}-${crop.optimalTemp.max}°C。</p><p>${c.soilTemp > crop.optimalTemp.max ? '建议覆盖遮阳网，增加通风，降低地温。' : '建议覆盖地膜或增施有机肥提高地温。'}</p></div>`; }
+            if (c.wind > 8) { adviceHTML += `<div class="p-3 bg-purple-50 rounded-lg border border-purple-200"><strong class="text-purple-700">大风风险</strong><p class="mt-1">当前风速 ${c.wind.toFixed(1)} m/s。${crop.windSensitivity}</p><p>建议加固支架，绑缚枝条，减少风害。</p></div>`; }
             const avgTemp = (fc.tempMax.reduce((a,b)=>a+b,0) / fc.tempMax.length + fc.tempMin.reduce((a,b)=>a+b,0) / fc.tempMin.length) / 2;
-            adviceHTML += `<div class="p-3 bg-gray-50 rounded-lg border border-gray-200"><strong>📋 综合管理建议</strong><p class="mt-1">未来7天平均气温约 ${avgTemp.toFixed(1)}°C，累计降水 ${rainTotal.toFixed(1)}mm。结合当前土壤状况，${crop.name}生长${(c.soilMoist >= crop.optimalMoisture.min && c.soilMoist <= crop.optimalMoisture.max) ? '良好' : '需调整水分管理'}。建议定期巡查果园，关注天气预报，及时调整农事操作。</p></div>`;
+            adviceHTML += `<div class="p-3 bg-gray-50 rounded-lg border border-gray-200"><strong>📋 综合管理建议</strong><p class="mt-1">未来7天平均气温约 ${avgTemp.toFixed(1)}°C，累计降水 ${rainTotal.toFixed(1)}mm。建议定期巡查果园，关注天气预报。</p></div>`;
             if (!adviceHTML) adviceHTML = '<div class="text-sm text-gray-500">当前天气适宜，无需特殊管理。</div>';
             document.getElementById('adviceContent').innerHTML = adviceHTML;
         }
 
         function renderMyInsurance() {
             const container = document.getElementById('myInsuranceContent');
-            if (PURCHASED_INSURANCE.length === 0) { container.innerHTML = '<p class="text-sm text-gray-500">暂无已购保险。</p>'; return; }
+            if (!PURCHASED_INSURANCE.length) { container.innerHTML = '<p class="text-sm text-gray-500">暂无已购保险。</p>'; return; }
             container.innerHTML = PURCHASED_INSURANCE.map(policy => {
                 const product = INSURANCE_PRODUCTS.find(p => p.id === policy.productId);
                 if (!product) return '';
@@ -571,36 +562,144 @@
             }).join('');
         }
 
-        function openPurchasedDetail(policyNo) { /* 保持简洁，调用detailModal */ const policy = PURCHASED_INSURANCE.find(p => p.policyNo === policyNo); if (!policy) return; const product = INSURANCE_PRODUCTS.find(p => p.id === policy.productId); if (!product) return; const starRating = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating); let claimHistoryHTML = policy.claimHistory.length > 0 ? policy.claimHistory.map(claim => `<div class="flex justify-between items-center text-sm py-2 border-b border-gray-100"><span>${claim.date} · ${claim.type}</span><span class="font-semibold">¥${claim.amount}</span><span class="text-green-600">${claim.status}</span></div>`).join('') : '<p class="text-sm text-gray-500">暂无理赔记录</p>'; const bodyHTML = `<div class="space-y-4"><div class="flex items-center gap-3"><span class="text-3xl">${product.icon}</span><div><h3 class="text-lg font-bold">${product.name}</h3><span class="text-sm text-gray-500">保单号：${policy.policyNo}</span></div></div><div class="grid grid-cols-2 gap-4 text-sm"><div><strong>被保险人：</strong>郑得轩</div><div><strong>保障状态：</strong><span class="text-green-600 font-semibold">${policy.status}</span></div><div><strong>保障期限：</strong>${policy.startDate} 至 ${policy.endDate}</div><div><strong>投保面积：</strong>${policy.insuredArea}亩</div><div><strong>已缴保费：</strong>¥${policy.premiumPaid}</div><div><strong>免赔额：</strong>${product.deductible}</div></div><div><h4 class="font-semibold text-sm">产品简介</h4><p class="text-sm text-gray-700 mt-1">${product.summary}</p></div><div><h4 class="font-semibold text-sm">具体赔偿条款</h4><ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-gray-700">${product.clauses.map(clause => `<li>${clause}</li>`).join('')}</ul></div><div><h4 class="font-semibold text-sm">理赔历史</h4>${claimHistoryHTML}</div></div>`; document.getElementById('detailModalTitle').textContent = `📑 ${product.name}`; document.getElementById('detailModalBody').innerHTML = bodyHTML; openDetailModal(); }
+        function openPurchasedDetail(policyNo) {
+            const policy = PURCHASED_INSURANCE.find(p => p.policyNo === policyNo);
+            if (!policy) return;
+            const product = INSURANCE_PRODUCTS.find(p => p.id === policy.productId);
+            if (!product) return;
+            let claimHistoryHTML = policy.claimHistory.length > 0 ? policy.claimHistory.map(claim => `<div class="flex justify-between items-center text-sm py-2 border-b border-gray-100"><span>${claim.date} · ${claim.type}</span><span class="font-semibold">¥${claim.amount}</span><span class="text-green-600">${claim.status}</span></div>`).join('') : '<p class="text-sm text-gray-500">暂无理赔记录</p>';
+            const bodyHTML = `<div class="space-y-4"><div class="flex items-center gap-3"><span class="text-3xl">${product.icon}</span><div><h3 class="text-lg font-bold">${product.name}</h3><span class="text-sm text-gray-500">保单号：${policy.policyNo}</span></div></div><div class="grid grid-cols-2 gap-4 text-sm"><div><strong>被保险人：</strong>郑得轩</div><div><strong>保障状态：</strong><span class="text-green-600 font-semibold">${policy.status}</span></div><div><strong>保障期限：</strong>${policy.startDate} 至 ${policy.endDate}</div><div><strong>投保面积：</strong>${policy.insuredArea}亩</div><div><strong>已缴保费：</strong>¥${policy.premiumPaid}</div><div><strong>免赔额：</strong>${product.deductible}</div></div><div><h4 class="font-semibold text-sm">产品简介</h4><p class="text-sm text-gray-700 mt-1">${product.summary}</p></div><div><h4 class="font-semibold text-sm">具体赔偿条款</h4><ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-gray-700">${product.clauses.map(clause => `<li>${clause}</li>`).join('')}</ul></div><div><h4 class="font-semibold text-sm">理赔历史</h4>${claimHistoryHTML}</div></div>`;
+            document.getElementById('detailModalTitle').textContent = `📑 ${product.name}`;
+            document.getElementById('detailModalBody').innerHTML = bodyHTML;
+            openDetailModal();
+        }
 
-        function updateInsurance() { /* 简化，保持原有逻辑 */ }
+        function updateInsurance() {
+            const container = document.getElementById('insuranceContent');
+            const applicable = INSURANCE_PRODUCTS.filter(p => p.applicableCrops.includes(currentCrop));
+            if (!applicable.length) { container.innerHTML = '<p class="text-sm text-gray-500">暂无可推荐的保险产品。</p>'; return; }
+            container.innerHTML = applicable.map(product => {
+                const starRating = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
+                return `<div class="insurance-card bg-white rounded-lg border border-gray-200 p-4" onclick="openInsuranceDetail('${product.id}')"><div class="flex items-start justify-between gap-3"><div class="flex items-start gap-3 flex-1"><span class="text-2xl">${product.icon}</span><div><div class="flex items-center gap-2 flex-wrap"><h4 class="font-semibold text-sm">${product.name}</h4><span class="text-xs text-gray-500">${product.ratingText}</span></div><div class="flex items-center mt-1"><span class="star-rating text-sm">${starRating}</span><span class="text-xs text-gray-400 ml-2">推荐指数 ${product.rating}/5</span></div><p class="text-xs text-gray-600 mt-2">${product.summary}</p></div></div><span class="text-xs text-gray-400">查看详情 →</span></div></div>`;
+            }).join('');
+            const riskLevel = getRiskLevel();
+            document.getElementById('insuranceStatus').textContent = riskLevel + '风险';
+            document.getElementById('insuranceBadge').textContent = riskLevel === '高' ? '需关注' : '已激活';
+        }
 
-        function getRiskLevel() { const fc = weatherData.forecast; const rainTotal = fc.rain.reduce((a,b)=>a+b,0); if (rainTotal > 200) return '高'; else if (rainTotal > 100) return '中'; else return '低'; }
+        function getRiskLevel() {
+            const fc = weatherData.forecast;
+            const rainTotal = fc.rain.reduce((a,b)=>a+b,0);
+            if (rainTotal > 200) return '高';
+            else if (rainTotal > 100) return '中';
+            else return '低';
+        }
 
-        function openInsuranceDetail(id) { /* 简化 */ }
+        function openInsuranceDetail(id) {
+            const product = INSURANCE_PRODUCTS.find(p => p.id === id);
+            if (!product) return;
+            const starRating = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
+            const bodyHTML = `<div class="space-y-4"><div class="flex items-center gap-3"><span class="text-3xl">${product.icon}</span><div><h3 class="text-lg font-bold">${product.name}</h3><span class="text-sm text-gray-500">${product.ratingText}</span></div></div><div class="flex items-center gap-2"><span class="star-rating">${starRating}</span><span class="text-sm text-gray-400">推荐指数 ${product.rating}/5</span></div><div class="grid grid-cols-2 gap-4 text-sm"><div><strong>保费示例：</strong>${product.premiumExample}</div><div><strong>保额范围：</strong>${product.coverage}</div><div><strong>免赔额：</strong>${product.deductible}</div></div><div><h4 class="font-semibold text-sm">产品简介</h4><p class="text-sm text-gray-700 mt-1">${product.summary}</p></div><div><h4 class="font-semibold text-sm">具体赔偿条款</h4><ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-gray-700">${product.clauses.map(clause => `<li>${clause}</li>`).join('')}</ul></div></div>`;
+            document.getElementById('detailModalTitle').textContent = `🛡️ ${product.name}`;
+            document.getElementById('detailModalBody').innerHTML = bodyHTML;
+            openDetailModal();
+        }
 
-        function renderPolicy() { /* 简化 */ }
+        function renderPolicy() {
+            const container = document.getElementById('policyList');
+            const filtered = POLICY_DB.filter(p => p.crops.includes(currentCrop) || p.tags.some(tag => ['国家政策','省级政策','设施农业'].includes(tag)));
+            if (!filtered.length) { container.innerHTML = '<p class="text-sm text-gray-500 py-4">暂无相关农业政策。</p>'; return; }
+            container.innerHTML = filtered.map(p => `<div class="policy-card bg-white rounded-lg border border-gray-200 p-4" onclick="openPolicyDetail(${p.id})"><div class="flex items-start justify-between gap-4"><div class="flex-1"><div class="flex flex-wrap items-center gap-2 mb-1"><span class="text-sm font-semibold text-gray-800">${p.title}</span>${p.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs">${tag}</span>`).join('')}</div><p class="text-xs text-gray-600 mb-1">${p.summary}</p><div class="text-xs text-gray-400">${p.source} · ${p.date}</div></div><span class="text-xs text-gray-400">查看全文 →</span></div></div>`).join('');
+        }
 
-        function openPolicyDetail(id) { /* 简化 */ }
+        function openPolicyDetail(id) {
+            const policy = POLICY_DB.find(p => p.id === id);
+            if (!policy) return;
+            const bodyHTML = `<div class="space-y-3"><div class="flex flex-wrap items-center gap-2">${policy.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs">${tag}</span>`).join('')}</div><h3 class="text-lg font-bold">${policy.title}</h3><div class="text-sm text-gray-500">${policy.source} · ${policy.date}</div><p class="text-sm text-gray-700 leading-relaxed">${policy.content}</p></div>`;
+            document.getElementById('detailModalTitle').textContent = `📜 ${policy.title}`;
+            document.getElementById('detailModalBody').innerHTML = bodyHTML;
+            openDetailModal();
+        }
 
-        function refreshPolicy() { /* 简化 */ }
+        function refreshPolicy() {
+            const shuffled = [...POLICY_DB].sort(() => Math.random() - 0.5);
+            POLICY_DB.length = 0;
+            POLICY_DB.push(...shuffled);
+            renderPolicy();
+            alert('政策已更新（演示数据）');
+        }
 
-        function onCropChange() { currentCrop = document.getElementById('cropSelect').value; updateAdvice(); updateInsurance(); updateRiskAssessment(); renderPolicy(); }
+        function onCropChange() {
+            currentCrop = document.getElementById('cropSelect').value;
+            updateAdvice();
+            updateInsurance();
+            updateRiskAssessment();
+            renderPolicy();
+        }
 
-        function openClaimModal() { claimModalOpen = true; document.getElementById('claimModal').classList.add('active'); document.body.style.overflow = 'hidden'; populateClaimModal(); const badge = document.querySelector('.relative .bg-red-500'); if (badge) badge.style.display = 'none'; }
+        function openClaimModal() {
+            claimModalOpen = true;
+            document.getElementById('claimModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+            populateClaimModal();
+            const badge = document.querySelector('.relative .bg-red-500');
+            if (badge) badge.style.display = 'none';
+        }
 
-        function closeClaimModal() { claimModalOpen = false; document.getElementById('claimModal').classList.remove('active'); document.body.style.overflow = 'auto'; const badge = document.querySelector('.relative .bg-red-500'); if (badge) badge.style.display = 'flex'; }
+        function closeClaimModal() {
+            claimModalOpen = false;
+            document.getElementById('claimModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+            const badge = document.querySelector('.relative .bg-red-500');
+            if (badge) badge.style.display = 'flex';
+        }
 
-        function openDetailModal() { document.getElementById('detailModal').classList.add('active'); document.body.style.overflow = 'hidden'; }
+        function openDetailModal() {
+            document.getElementById('detailModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
 
-        function closeDetailModal() { document.getElementById('detailModal').classList.remove('active'); document.body.style.overflow = 'auto'; }
+        function closeDetailModal() {
+            document.getElementById('detailModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
 
-        function populateClaimModal() { /* 简化，保持原有核心 */ }
+        function populateClaimModal() {
+            const crop = CROPS[currentCrop];
+            const rain = weatherData.current.rain;
+            const insuredArea = 10;
+            const amountPerMu = crop.insuredAmountPerMu;
+            let affectedArea = 0, lossDegree = 0;
+            if (rain > THRESHOLD_RAIN) {
+                if (rain >= 100) { affectedArea = insuredArea * 0.5; lossDegree = 0.6; }
+                else { affectedArea = insuredArea * 0.3; lossDegree = 0.4; }
+            } else { affectedArea = insuredArea * 0.1; lossDegree = 0.2; }
+            const estimatedLoss = affectedArea * amountPerMu * lossDegree;
+            const deductible = 500;
+            const payable = Math.max(0, estimatedLoss - deductible);
+            const claimSteps = [
+                { name: '报案受理', status: 'completed' },
+                { name: '现场查勘', status: 'completed' },
+                { name: '定损核算', status: 'current' },
+                { name: '审核赔付', status: 'pending' }
+            ];
+            let stepsHTML = claimSteps.map(step => `<div class="claim-step-indicator"><span class="claim-dot ${step.status === 'completed' ? 'completed' : step.status === 'current' ? 'current' : ''}"></span><span class="text-sm ${step.status === 'current' ? 'font-medium text-indigo-600' : 'text-gray-500'}">${step.name}</span></div>`).join('');
+            const progressPercent = (claimSteps.filter(s => s.status === 'completed').length / claimSteps.length) * 100;
+            const bodyHTML = `<div class="space-y-4"><div class="grid grid-cols-2 gap-4"><div><span class="text-xs text-gray-500">案件编号</span><br><span class="font-semibold">CLM-2026-08-${Math.floor(Math.random()*9000+1000)}</span></div><div><span class="text-xs text-gray-500">被保险人</span><br><span class="font-semibold">郑得轩</span></div><div><span class="text-xs text-gray-500">作物类型</span><br><span class="font-semibold">${crop.name}</span></div><div><span class="text-xs text-gray-500">保单号</span><br><span class="font-semibold">POL-2026-0001</span></div></div><div class="bg-gray-50 rounded-lg p-4 border border-gray-200"><h4 class="font-semibold text-sm mb-2">📄 保险条款摘要</h4><ul class="text-xs text-gray-700 space-y-1"><li><strong>保险责任：</strong>因暴雨、洪水、风灾等自然灾害导致${crop.name}损失，保险人按合同约定负责赔偿。</li><li><strong>责任免除：</strong>战争、军事行动、故意行为、管理不善等造成的损失，保险人不负责赔偿。</li><li><strong>赔偿处理：</strong>发生保险事故后，被保险人应在24小时内报案。保险人根据受灾面积、损失程度和每亩保额计算赔偿金额，扣除免赔额后赔付。</li></ul></div><div class="grid grid-cols-2 gap-4"><div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><span class="text-xs text-gray-500">投保面积</span><br><span class="font-semibold">${insuredArea} 亩</span></div><div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><span class="text-xs text-gray-500">受灾面积</span><br><span class="font-semibold text-red-600">${affectedArea.toFixed(1)} 亩</span></div><div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><span class="text-xs text-gray-500">损失程度</span><br><span class="font-semibold">${(lossDegree*100).toFixed(0)}%</span></div><div class="bg-gray-50 rounded-lg p-3 border border-gray-200"><span class="text-xs text-gray-500">预计损失金额</span><br><span class="font-semibold">¥${estimatedLoss.toFixed(0)}</span></div></div><div><div class="flex justify-between text-xs text-gray-500 mb-1"><span>理赔进度</span><span>${progressPercent.toFixed(0)}%</span></div><div class="progress-bar"><div class="progress-bar-fill" style="width:${progressPercent}%"></div></div><div class="grid grid-cols-4 gap-2 mt-2">${stepsHTML}</div></div><div class="bg-indigo-50 rounded-lg p-4 border border-indigo-200"><div class="flex justify-between items-center"><span class="text-sm font-medium text-indigo-700">预计赔付金额</span><span class="text-2xl font-bold text-indigo-700">¥${payable.toFixed(0)}</span></div><div class="text-xs text-indigo-500 mt-1">（已扣除免赔额 ¥${deductible}）</div></div></div>`;
+            document.getElementById('claimModalBody').innerHTML = bodyHTML;
+        }
 
         init();
         setInterval(async () => {
             await Promise.all([fetchCurrentWeather(), fetchForecast(), fetchHistory(), fetchPast24h()]);
-            updateScrollSummary(); updateKPI(); updateCharts(); updatePast24hCharts(); updateRiskAssessment(); updateAdvice(); updateInsurance(); renderMyInsurance();
+            updateFloatingSummary();
+            updateKPI();
+            updateCharts();
+            updatePast24hCharts();
+            updateRiskAssessment();
+            updateAdvice();
+            updateInsurance();
+            renderMyInsurance();
             if (claimModalOpen) populateClaimModal();
         }, 30 * 60 * 1000);
     </script>
