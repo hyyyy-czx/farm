@@ -46,15 +46,23 @@
         .policy-card, .insurance-card, .purchased-card { cursor: pointer; transition: background-color 0.15s ease; }
         .policy-card:hover, .insurance-card:hover, .purchased-card:hover { background-color: #f9fafb; }
         .status-badge { display: inline-block; padding: 0.125rem 0.5rem; border-radius: 0.25rem; font-size: 0.7rem; font-weight: 500; }
-        /* 侧边栏导航高亮 */
-        .nav-link { transition: background-color 0.2s ease, color 0.2s ease; }
+        /* 导航高亮 - 悬停和滚动均可触发 */
+        .nav-link {
+            transition: background-color 0.25s ease, color 0.25s ease;
+            cursor: pointer;
+        }
         .nav-link.active-nav {
-            background: rgba(255,255,255,0.12);
+            background: rgba(255,255,255,0.15);
             color: #fff;
+            font-weight: 600;
         }
         .nav-link:not(.active-nav) {
             background: transparent;
-            color: rgba(255,255,255,0.7);
+            color: rgba(255,255,255,0.65);
+        }
+        .nav-link:hover:not(.active-nav) {
+            background: rgba(255,255,255,0.08);
+            color: #fff;
         }
         /* 悬浮摘要胶囊 */
         .floating-summary {
@@ -134,14 +142,14 @@
                 <span class="font-semibold tracking-tight text-lg">农保智策</span>
             </div>
             <nav class="flex-1 py-4 space-y-1" id="sideNav">
-                <a href="#dashboard" class="nav-link active-nav flex items-center gap-3 px-6 py-2.5 text-sm font-medium"><span>📊</span> 数据概览</a>
-                <a href="#forecast" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm font-medium"><span>📈</span> 未来预测</a>
-                <a href="#history" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm font-medium"><span>📉</span> 历史趋势</a>
-                <a href="#hourly24" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm font-medium"><span>🕒</span> 24小时监测</a>
-                <a href="#advice" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm font-medium"><span>💡</span> 种植建议</a>
-                <a href="#myinsurance" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm font-medium"><span>📑</span> 我的保单</a>
-                <a href="#insurance" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm font-medium"><span>🛡️</span> 保险推荐</a>
-                <a href="#policy" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm font-medium"><span>📜</span> 农业政策</a>
+                <a href="#dashboard" class="nav-link active-nav flex items-center gap-3 px-6 py-2.5 text-sm"><span>📊</span> 数据概览</a>
+                <a href="#forecast" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>📈</span> 未来预测</a>
+                <a href="#history" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>📉</span> 历史趋势</a>
+                <a href="#hourly24" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>🕒</span> 24小时监测</a>
+                <a href="#myinsurance" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>📑</span> 我的保单</a>
+                <a href="#advice" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>💡</span> 种植建议</a>
+                <a href="#insurance" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>🛡️</span> 保险推荐</a>
+                <a href="#policy" class="nav-link flex items-center gap-3 px-6 py-2.5 text-sm"><span>📜</span> 农业政策</a>
             </nav>
             <div class="px-6 py-4 border-t border-gray-800 flex items-center gap-3">
                 <div class="w-8 h-8 circle bg-indigo-500 flex items-center justify-center text-sm font-bold">郑</div>
@@ -308,11 +316,11 @@
             { policyNo: 'POL-2026-0720', productId: 'ins_facility', insuredArea: 5, startDate: '2026-02-15', endDate: '2027-02-14', premiumPaid: 6000, status: '生效中', claimHistory: [] }
         ];
         const POLICY_DB = [
-            { id: 1, title: '关于加快农业保险高质量发展的指导意见', source: '农业农村部', date: '2026-07-25', tags: ['国家政策','农业保险'], summary: '提出扩大农业保险覆盖面，提高保障水平，优化运行机制。', content: '文件指出，到2030年，农业保险深度达到1%以上，密度达到500元/人以上，基本建成功能完善、运行规范、基础完备的农业保险体系。重点强调将特色农产品保险纳入中央财政以奖代补范围，鼓励地方发展优势特色农产品保险。对农户而言，可获得更高比例的保费补贴，降低投保成本。广东省内火龙果、番石榴等特色水果种植户均可申请纳入奖补目录，享受省级财政额外补贴。', crops: ['guava','dragonfruit'] },
-            { id: 2, title: '广东省政策性农业保险实施方案（2026-2028年）', source: '广东省农业农村厅', date: '2026-07-10', tags: ['省级政策','种植业'], summary: '明确水果类保险保费补贴比例。', content: '方案提出，对水果类保险保费补贴比例由省级财政承担40%，市县财政承担30%，农户自缴30%。对于火龙果、番石榴等地方特色水果，可纳入省级特色农产品保险奖补目录，享受额外保费补贴。同时，试点开展气象指数保险和价格指数保险，丰富产品供给。各地市须在2026年底前完成特色农产品保险产品备案，确保2027年全面落地实施。', crops: ['guava','dragonfruit'] },
-            { id: 3, title: '汕头市濠江区特色农产品优势区建设规划', source: '濠江区农业农村和水务局', date: '2026-06-30', tags: ['地方政策','火龙果','番石榴'], summary: '重点支持火龙果、番石榴等特色产业。', content: '规划提出，到2028年，濠江区火龙果种植面积达到1万亩，番石榴种植面积达到0.8万亩。区财政将对投保特色农产品保险的农户给予额外5%的保费补贴，并安排专项资金支持果园基础设施建设。同时，建立区级农业技术推广中心，为农户提供免费技术指导。规划还明确将引入智慧农业平台，推动气象数据、土壤传感器与保险产品深度融合，实现精准承保与自动理赔。', crops: ['guava','dragonfruit'] },
-            { id: 4, title: '关于支持设施农业发展的通知', source: '财政部、农业农村部', date: '2026-06-15', tags: ['设施农业','补贴'], summary: '对设施农业给予财政补贴。', content: '通知明确，对新建和改造设施农业的经营主体，中央财政按照不超过建设成本的30%给予补贴。优先支持用于种植经济作物的温室大棚、水肥一体化系统、遮阳网等设施。设施农业保险单独开发，保额更高，保障范围涵盖设施本身和棚内作物。各地要结合当地实际，制定具体实施细则，确保补贴资金精准到位。', crops: ['guava','dragonfruit'] },
-            { id: 5, title: '红心火龙果种植技术规程（2026年修订版）', source: '广东省农业科学院', date: '2026-05-20', tags: ['技术标准','火龙果'], summary: '发布火龙果种植管理规范。', content: '规程详细规定了火龙果适宜生长的土壤酸碱度（pH 5.5-7.0）、土壤含水量（50%-70%）、温度范围（25-35°C）以及水肥一体化管理技术。特别强调在台风季节来临前应做好支架加固和排水沟清理，在连续阴雨天气后需及时喷施保护性杀菌剂。规程还新增了智慧农业配套要求，鼓励种植户安装土壤传感器和气象站，实现精准灌溉和病虫害预警。', crops: ['dragonfruit'] },
+            { id: 1, title: '关于加快农业保险高质量发展的指导意见', source: '农业农村部', date: '2026-07-25', tags: ['国家政策','农业保险'], summary: '提出扩大农业保险覆盖面，提高保障水平，优化运行机制。', content: '文件指出，到2030年，农业保险深度达到1%以上，密度达到500元/人以上，基本建成功能完善、运行规范、基础完备的农业保险体系。重点强调将特色农产品保险纳入中央财政以奖代补范围，鼓励地方发展优势特色农产品保险。对农户而言，可获得更高比例的保费补贴，降低投保成本。广东省内火龙果、番石榴等特色水果种植户均可申请纳入奖补目录，享受省级财政额外补贴。各地要结合实际制定实施细则，确保政策落地见效。', crops: ['guava','dragonfruit'] },
+            { id: 2, title: '广东省政策性农业保险实施方案（2026-2028年）', source: '广东省农业农村厅', date: '2026-07-10', tags: ['省级政策','种植业'], summary: '明确水果类保险保费补贴比例。', content: '方案提出，对水果类保险保费补贴比例由省级财政承担40%，市县财政承担30%，农户自缴30%。对于火龙果、番石榴等地方特色水果，可纳入省级特色农产品保险奖补目录，享受额外保费补贴。同时，试点开展气象指数保险和价格指数保险，丰富产品供给。各地市须在2026年底前完成特色农产品保险产品备案，确保2027年全面落地实施。农户可通过当地农业农村部门或保险机构了解具体投保流程。', crops: ['guava','dragonfruit'] },
+            { id: 3, title: '汕头市濠江区特色农产品优势区建设规划', source: '濠江区农业农村和水务局', date: '2026-06-30', tags: ['地方政策','火龙果','番石榴'], summary: '重点支持火龙果、番石榴等特色产业。', content: '规划提出，到2028年，濠江区火龙果种植面积达到1万亩，番石榴种植面积达到0.8万亩。区财政将对投保特色农产品保险的农户给予额外5%的保费补贴，并安排专项资金支持果园基础设施建设。同时，建立区级农业技术推广中心，为农户提供免费技术指导。规划还明确将引入智慧农业平台，推动气象数据、土壤传感器与保险产品深度融合，实现精准承保与自动理赔，提升农户抗风险能力。', crops: ['guava','dragonfruit'] },
+            { id: 4, title: '关于支持设施农业发展的通知', source: '财政部、农业农村部', date: '2026-06-15', tags: ['设施农业','补贴'], summary: '对设施农业给予财政补贴。', content: '通知明确，对新建和改造设施农业的经营主体，中央财政按照不超过建设成本的30%给予补贴。优先支持用于种植经济作物的温室大棚、水肥一体化系统、遮阳网等设施。设施农业保险单独开发，保额更高，保障范围涵盖设施本身和棚内作物。各地要结合当地实际，制定具体实施细则，确保补贴资金精准到位。农户可向当地农业农村部门提交申请材料，经审核后享受相应补贴。', crops: ['guava','dragonfruit'] },
+            { id: 5, title: '红心火龙果种植技术规程（2026年修订版）', source: '广东省农业科学院', date: '2026-05-20', tags: ['技术标准','火龙果'], summary: '发布火龙果种植管理规范。', content: '规程详细规定了火龙果适宜生长的土壤酸碱度（pH 5.5-7.0）、土壤含水量（50%-70%）、温度范围（25-35°C）以及水肥一体化管理技术。特别强调在台风季节来临前应做好支架加固和排水沟清理，在连续阴雨天气后需及时喷施保护性杀菌剂。规程还新增了智慧农业配套要求，鼓励种植户安装土壤传感器和气象站，实现精准灌溉和病虫害预警。建议种植户定期参加技术培训，掌握最新管理技术。', crops: ['dragonfruit'] },
             { id: 6, title: '番石榴主要病虫害绿色防控技术指南', source: '全国农业技术推广服务中心', date: '2026-05-12', tags: ['植保','番石榴'], summary: '推广番石榴绿色防控技术。', content: '指南列出了番石榴常见病虫害（如根结线虫、炭疽病、果实蝇等）的绿色防控技术，包括使用生物农药、性诱剂、套袋、物理隔离等方法。提倡在果实膨大期采用套袋技术，可有效减少病虫害并改善果面色泽，同时建议在暴雨后及时排水并松土，减少根系病害发生。指南强调，绿色防控技术需要与气象监测相结合，在连续降雨前后采取针对性预防措施，最大限度降低损失。', crops: ['guava'] }
         ];
 
@@ -335,6 +343,7 @@
             renderPolicy();
             initIntersectionObserver();
             initScrollSpy();
+            initHoverHighlight();
         }
 
         // 滚动监听：KPI不可见时显示悬浮胶囊
@@ -350,24 +359,51 @@
             observer.observe(dashboardSection);
         }
 
-        // 滚动监听：侧边栏导航高亮
+        // 滚动监听：侧边栏导航高亮（使用 getBoundingClientRect 更可靠）
         function initScrollSpy() {
             const sections = ['dashboard','forecast','history','hourly24','myinsurance','advice','insurance','policy'];
             const navLinks = document.querySelectorAll('#sideNav .nav-link');
-            const sectionElements = sections.map(id => document.getElementById(id)).filter(Boolean);
+            const mainContainer = document.querySelector('.main-content');
 
-            const observer = new IntersectionObserver((entries) => {
-                entries.forEach(entry => {
-                    if (entry.isIntersecting) {
-                        const id = entry.target.id;
-                        navLinks.forEach(link => {
-                            link.classList.toggle('active-nav', link.getAttribute('href') === '#' + id);
-                        });
+            function updateActiveNav() {
+                let currentId = sections[0];
+                for (const id of sections) {
+                    const el = document.getElementById(id);
+                    if (!el) continue;
+                    const rect = el.getBoundingClientRect();
+                    // 如果元素顶部在视口上方120px以内，则认为当前区域
+                    if (rect.top <= 150) {
+                        currentId = id;
+                    } else {
+                        break;
                     }
+                }
+                navLinks.forEach(link => {
+                    link.classList.toggle('active-nav', link.getAttribute('href') === '#' + currentId);
                 });
-            }, { threshold: 0.25, rootMargin: '-20% 0px -70% 0px' });
+            }
 
-            sectionElements.forEach(sec => observer.observe(sec));
+            // 监听滚动事件
+            window.addEventListener('scroll', updateActiveNav, { passive: true });
+            // 初始调用
+            updateActiveNav();
+        }
+
+        // 鼠标悬停高亮
+        function initHoverHighlight() {
+            const navLinks = document.querySelectorAll('#sideNav .nav-link');
+            navLinks.forEach(link => {
+                link.addEventListener('mouseenter', () => {
+                    navLinks.forEach(l => l.classList.remove('active-nav'));
+                    link.classList.add('active-nav');
+                });
+            });
+            // 鼠标离开侧边栏时，恢复滚动位置高亮
+            const sideNav = document.getElementById('sideNav');
+            sideNav.addEventListener('mouseleave', () => {
+                // 触发滚动更新
+                window.dispatchEvent(new Event('scroll'));
+            });
         }
 
         function updateFloatingSummary() {
@@ -586,7 +622,6 @@
             if (windRisk === '高') insuranceAdvice = '建议投保设施农业保险';
             document.getElementById('riskInsurance').textContent = insuranceAdvice;
 
-            // 更新KPI保险推荐卡片
             const insuranceStatusEl = document.getElementById('insuranceStatus');
             if (riskScore >= 50) {
                 insuranceStatusEl.textContent = '暴雨指数保险';
@@ -651,14 +686,6 @@
                 const starRating = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
                 return `<div class="insurance-card bg-white rounded-lg border border-gray-200 p-4" onclick="openInsuranceDetail('${product.id}')"><div class="flex items-start justify-between gap-3"><div class="flex items-start gap-3 flex-1"><span class="text-2xl">${product.icon}</span><div><div class="flex items-center gap-2 flex-wrap"><h4 class="font-semibold text-sm">${product.name}</h4><span class="text-xs text-gray-500">${product.ratingText}</span></div><div class="flex items-center mt-1"><span class="star-rating text-sm">${starRating}</span><span class="text-xs text-gray-400 ml-2">推荐指数 ${product.rating}/5</span></div><p class="text-xs text-gray-600 mt-2">${product.summary}</p></div></div><span class="text-xs text-gray-400">查看详情 →</span></div></div>`;
             }).join('');
-        }
-
-        function getRiskLevel() {
-            const fc = weatherData.forecast;
-            const rainTotal = fc.rain.reduce((a,b)=>a+b,0);
-            if (rainTotal > 200) return '高';
-            else if (rainTotal > 100) return '中';
-            else return '低';
         }
 
         function openInsuranceDetail(id) {
