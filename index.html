@@ -60,27 +60,14 @@
         }
         .claim-dot.completed { background: #10b981; }
         .claim-dot.current { background: #6366f1; width: 14px; height: 14px; }
-        /* 卡片展开动画 */
-        .expandable-content {
-            max-height: 0;
-            overflow: hidden;
-            transition: max-height 0.4s ease, padding 0.3s ease;
-            padding: 0 1rem;
-        }
-        .expandable-content.open {
-            max-height: 1000px;
-            padding: 1rem;
-        }
+        .star-rating { color: #f59e0b; letter-spacing: 1px; }
+        /* 简介卡片样式 */
         .policy-card, .insurance-card {
             cursor: pointer;
             transition: background-color 0.15s ease;
         }
         .policy-card:hover, .insurance-card:hover {
             background-color: #f9fafb;
-        }
-        .star-rating {
-            color: #f59e0b;
-            letter-spacing: 1px;
         }
     </style>
 </head>
@@ -135,7 +122,6 @@
                         <span class="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">🔍</span>
                     </div>
                     <div class="flex items-center gap-3">
-                        <!-- 通知铃铛：点击触发理赔详情 -->
                         <button 
                             onclick="openClaimModal()" 
                             title="查看理赔详情（模拟理赔）"
@@ -242,7 +228,7 @@
                     </div>
                 </section>
 
-                <!-- 新增：最新农业政策 -->
+                <!-- 最新农业政策 -->
                 <section id="policy" class="bg-white rounded-xl shadow-sm border border-gray-100 p-4 md:p-6">
                     <div class="flex items-center justify-between mb-4">
                         <h3 class="font-semibold tracking-tight text-sm md:text-base">📜 最新农业政策</h3>
@@ -269,6 +255,19 @@
                 <button class="modal-close" onclick="closeClaimModal()">✕</button>
             </div>
             <div id="claimModalBody">
+                <!-- 动态填充 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 详情模态框（保险/政策） -->
+    <div class="modal-overlay" id="detailModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="text-lg font-semibold tracking-tight" id="detailModalTitle">详情</h2>
+                <button class="modal-close" onclick="closeDetailModal()">✕</button>
+            </div>
+            <div id="detailModalBody">
                 <!-- 动态填充 -->
             </div>
         </div>
@@ -451,9 +450,7 @@
         };
         let charts = {};
         let claimModalOpen = false;
-        // 用于保存展开状态
-        let expandedPolicyId = null;
-        let expandedInsuranceId = null;
+        let detailModalOpen = false;
 
         // 初始化
         async function init() {
@@ -651,7 +648,7 @@
             document.getElementById('adviceContent').innerHTML = adviceHTML;
         }
 
-        // 更新保险推荐（多产品卡片，可展开）
+        // 更新保险推荐（简介卡片，点击打开详情模态框）
         function updateInsurance() {
             const container = document.getElementById('insuranceContent');
             const applicableProducts = INSURANCE_PRODUCTS.filter(p => p.applicableCrops.includes(currentCrop));
@@ -663,11 +660,10 @@
 
             let html = '';
             applicableProducts.forEach(product => {
-                const isOpen = expandedInsuranceId === product.id;
                 const starRating = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
                 html += `
-                <div class="insurance-card bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div class="p-4 flex items-start justify-between gap-3" onclick="toggleInsurance('${product.id}')">
+                <div class="insurance-card bg-white rounded-lg border border-gray-200 p-4" onclick="openInsuranceDetail('${product.id}')">
+                    <div class="flex items-start justify-between gap-3">
                         <div class="flex items-start gap-3 flex-1">
                             <span class="text-2xl">${product.icon}</span>
                             <div>
@@ -679,23 +675,10 @@
                                     <span class="star-rating text-sm">${starRating}</span>
                                     <span class="text-xs text-gray-400 ml-2">推荐指数 ${product.rating}/5</span>
                                 </div>
+                                <p class="text-xs text-gray-600 mt-2">${product.summary}</p>
                             </div>
                         </div>
-                        <span class="text-xs text-gray-400">${isOpen ? '收起 ▲' : '展开 ▼'}</span>
-                    </div>
-                    <div class="expandable-content ${isOpen ? 'open' : ''} bg-gray-50 border-t border-gray-100">
-                        <div class="text-xs text-gray-600 space-y-2">
-                            <p><strong>保费示例：</strong>${product.premiumExample}</p>
-                            <p><strong>保额范围：</strong>${product.coverage}</p>
-                            <p><strong>免赔额：</strong>${product.deductible}</p>
-                            <p><strong>产品简介：</strong>${product.summary}</p>
-                            <div class="mt-2">
-                                <strong>具体赔偿条款：</strong>
-                                <ul class="list-disc pl-5 mt-1 space-y-1">
-                                    ${product.clauses.map(clause => `<li>${clause}</li>`).join('')}
-                                </ul>
-                            </div>
-                        </div>
+                        <span class="text-xs text-gray-400">查看详情 →</span>
                     </div>
                 </div>
                 `;
@@ -715,16 +698,47 @@
             else return '低';
         }
 
-        function toggleInsurance(id) {
-            if (expandedInsuranceId === id) {
-                expandedInsuranceId = null;
-            } else {
-                expandedInsuranceId = id;
-            }
-            updateInsurance();
+        // 打开保险详情模态框
+        function openInsuranceDetail(id) {
+            const product = INSURANCE_PRODUCTS.find(p => p.id === id);
+            if (!product) return;
+            const starRating = '★'.repeat(product.rating) + '☆'.repeat(5 - product.rating);
+            const bodyHTML = `
+                <div class="space-y-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-3xl">${product.icon}</span>
+                        <div>
+                            <h3 class="text-lg font-bold">${product.name}</h3>
+                            <span class="text-sm text-gray-500">${product.ratingText}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-2">
+                        <span class="star-rating">${starRating}</span>
+                        <span class="text-sm text-gray-400">推荐指数 ${product.rating}/5</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                        <div><strong>保费示例：</strong>${product.premiumExample}</div>
+                        <div><strong>保额范围：</strong>${product.coverage}</div>
+                        <div><strong>免赔额：</strong>${product.deductible}</div>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-sm">产品简介</h4>
+                        <p class="text-sm text-gray-700 mt-1">${product.summary}</p>
+                    </div>
+                    <div>
+                        <h4 class="font-semibold text-sm">具体赔偿条款</h4>
+                        <ul class="list-disc pl-5 mt-2 space-y-1 text-sm text-gray-700">
+                            ${product.clauses.map(clause => `<li>${clause}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            document.getElementById('detailModalTitle').textContent = `🛡️ ${product.name}`;
+            document.getElementById('detailModalBody').innerHTML = bodyHTML;
+            openDetailModal();
         }
 
-        // 渲染农业政策（可展开）
+        // 渲染农业政策（简介卡片，点击打开详情模态框）
         function renderPolicy() {
             const container = document.getElementById('policyList');
             const filtered = POLICY_DB.filter(p => 
@@ -735,39 +749,44 @@
                 return;
             }
             container.innerHTML = filtered.map(p => {
-                const isOpen = expandedPolicyId === p.id;
                 return `
-                <div class="policy-card bg-white rounded-lg border border-gray-200 overflow-hidden">
-                    <div class="p-4" onclick="togglePolicy(${p.id})">
-                        <div class="flex items-start justify-between gap-4">
-                            <div class="flex-1">
-                                <div class="flex flex-wrap items-center gap-2 mb-1">
-                                    <span class="text-sm font-semibold text-gray-800">${p.title}</span>
-                                    ${p.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs">${tag}</span>`).join('')}
-                                </div>
-                                <p class="text-xs text-gray-600 mb-1">${p.summary}</p>
-                                <div class="text-xs text-gray-400">${p.source} · ${p.date}</div>
+                <div class="policy-card bg-white rounded-lg border border-gray-200 p-4" onclick="openPolicyDetail(${p.id})">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1">
+                            <div class="flex flex-wrap items-center gap-2 mb-1">
+                                <span class="text-sm font-semibold text-gray-800">${p.title}</span>
+                                ${p.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs">${tag}</span>`).join('')}
                             </div>
-                            <span class="text-xs text-gray-400">${isOpen ? '收起 ▲' : '展开 ▼'}</span>
+                            <p class="text-xs text-gray-600 mb-1">${p.summary}</p>
+                            <div class="text-xs text-gray-400">${p.source} · ${p.date}</div>
                         </div>
-                    </div>
-                    <div class="expandable-content ${isOpen ? 'open' : ''} bg-gray-50 border-t border-gray-100">
-                        <p class="text-sm text-gray-700">${p.content}</p>
+                        <span class="text-xs text-gray-400">查看全文 →</span>
                     </div>
                 </div>
                 `;
             }).join('');
         }
 
-        function togglePolicy(id) {
-            if (expandedPolicyId === id) {
-                expandedPolicyId = null;
-            } else {
-                expandedPolicyId = id;
-            }
-            renderPolicy();
+        // 打开政策详情模态框
+        function openPolicyDetail(id) {
+            const policy = POLICY_DB.find(p => p.id === id);
+            if (!policy) return;
+            const bodyHTML = `
+                <div class="space-y-3">
+                    <div class="flex flex-wrap items-center gap-2">
+                        ${policy.tags.map(tag => `<span class="policy-tag bg-indigo-50 text-indigo-700 px-2 py-0.5 rounded text-xs">${tag}</span>`).join('')}
+                    </div>
+                    <h3 class="text-lg font-bold">${policy.title}</h3>
+                    <div class="text-sm text-gray-500">${policy.source} · ${policy.date}</div>
+                    <p class="text-sm text-gray-700 leading-relaxed">${policy.content}</p>
+                </div>
+            `;
+            document.getElementById('detailModalTitle').textContent = `📜 ${policy.title}`;
+            document.getElementById('detailModalBody').innerHTML = bodyHTML;
+            openDetailModal();
         }
 
+        // 刷新政策（模拟重新获取）
         function refreshPolicy() {
             const shuffled = [...POLICY_DB].sort(() => Math.random() - 0.5);
             POLICY_DB.length = 0;
@@ -801,6 +820,20 @@
             if (badge) badge.style.display = 'flex';
         }
 
+        // 打开/关闭详情模态框
+        function openDetailModal() {
+            detailModalOpen = true;
+            document.getElementById('detailModal').classList.add('active');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeDetailModal() {
+            detailModalOpen = false;
+            document.getElementById('detailModal').classList.remove('active');
+            document.body.style.overflow = 'auto';
+        }
+
+        // 填充理赔模态框数据
         function populateClaimModal() {
             const crop = CROPS[currentCrop];
             const rain = weatherData.current.rain;
